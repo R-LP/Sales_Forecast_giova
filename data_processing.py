@@ -29,6 +29,13 @@ def read_from_processed_data_folder(filename, folder = None):
             return pd.read_pickle(path)
 
 
+def is_in_processed_data_folder(filename):
+    return filename in os.listdir(DATA_FOLDER)
 
 
+def read_from_transactions_foler(filename):
+    if filename.endswith(".csv"):
+        return pd.read_csv(os.path.join(TRANSACTIONS_FOLDER, filename))
+    else:
+        return pd.read_pickle(os.path.join(TRANSACTIONS_FOLDER, filename))
 
