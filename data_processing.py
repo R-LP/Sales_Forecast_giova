@@ -39,3 +39,13 @@ def read_from_transactions_foler(filename):
     else:
         return pd.read_pickle(os.path.join(TRANSACTIONS_FOLDER, filename))
 
+
+def save_to_processed_data_folder(filename):
+    path = os.path.join(DATA_FOLDER, filename)
+    data.to_csv(path, index = False)
+    print(f"... File saved at {}".format(path))
+
+
+
+
+
