@@ -46,6 +46,32 @@ def save_to_processed_data_folder(filename):
     print(f"... File saved at {}".format(path))
 
 
+def save_pickle_to_processed_data_folder(data, name):
+    path = os.path.join(DATA_FOLDER, name)
+    data.to_pickle(path)
+    print(f"... File saved at {}".format(path))    
 
+
+def get_period_list(min_date = "2015-01-01", max_date = "2018-12-31"):
+    return pd.date_range(min_date, max_date,  freq = 'W')
+
+
+def convert_to_week_date(x, periods):
+    if pd.isnull(x):
+        return x
+    else:
+        if x < periods[0] or x > periods[-1]:
+            return None
+        else:
+            return periods[periods.get_loc(x, method = "pad")]
+
+
+def save_json(d, filepath):
+    with open(filepath, "w", encoding ="utf8") as file:
+        json.dump(d, file, indent = 4, sort_keys = True)
+
+
+def read_json(filepath):
+    return json.loads(open(filepath, "r", encoding = "utf8").read())
 
 
