@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import missingno
+import matplotlib.pyplot as plt
 
 
 #-----------------------------------------------------------------------------------------
@@ -73,5 +74,88 @@ def save_json(d, filepath):
 
 def read_json(filepath):
     return json.loads(open(filepath, "r", encoding = "utf8").read())
+
+
+# The class data inherits from the class of the object intance
+class Data(object):
+    def _repr_html(self):
+        retunr self.data.head()._repr_html_()
+    
+
+    def show_missing_values(self):
+        missingno.matrix(self.data)
+        plt.show()
+
+
+    def convert_column_to_datetime(self, col):
+        self.data[col] = pd.to_datetime(self.data[col])
+
+    
+    def convert_column_to_weekdate(self, col):
+        print(f">> converting column {col} to weekdate")
+        periods = get_period_list()
+        self.data[col] = self.data[col].map(lambda x: convert_to_week_date(x, periods))
+
+
+    def to_datetime(self, force = False):
+        cols = ["Date_Transaction"]
+
+        for col in cols:
+            if col in self.data.columns:
+                if force or not hasattr(self, "converted_date_cols") or col not in self.converted_date_cols:
+                    print(f">> converting column {col} to datetime")
+                    self.convert_column_to_datetime(col)
+
+                    if hasattr(self, "converted_date_cols"):
+                        self.converted_date_cols.append(col)
+                    else:
+                        self.converted_date_cols = [col]
+
+
+    def create_temporal_features(self, column):
+        date_column = self.data[column]
+        self.data["year"] = date_column.map(lambda x : x.year)
+        self.data["month"] = date_column.map(lambda x : x.month)
+        self.data["week"] = date_column.map(lambda x : x.week)
+        self.data["day"] = date_column.map(lambda x : x.day)
+        self.data["dayofweek"] = date_column.map(lambda x : x.dayofweek)
+        self.data.drop(column, axis = 1,  inplace = True)
+
+
+    def reload_from_file(self, name = None, folder = None):
+        if name is None: name  = self.name
+        self.data = read_from_processed_data_folder(name, folder)
+
+
+    def to_csv(self, name = None):
+        if name is None: name = self.name
+        self.data = save_to_processed_data_folder(name, name)
+
+
+    def to_pickle(self, name = None):
+        if name is None: name = self.name
+        save_pickle_to_processed_data_folder(self.name, name)
+
+
+    def get_shape(self):
+        return self.data.shape
+
+    
+    def get_len(self):
+        return len(self.data)
+
+
+    def get_columns(self):
+        return self.data.columns
+
+
+    def filter_on_products(self, keys):
+        print(f">> Filtering on give list of products")
+
+        if not isinstance(keys, list):
+            keys =list(keys.data["ProductCategory"])
+        self.data = self.data.loc[self.data["ProductCategory"].isin(keys)]
+
+
 
 
