@@ -150,11 +150,14 @@ class Data(object):
 
 
     def filter_on_products(self, keys):
-        print(f">> Filtering on give list of products")
+        print(f">> Filtering on given list of products")
 
         if not isinstance(keys, list):
             keys =list(keys.data["ProductCategory"])
         self.data = self.data.loc[self.data["ProductCategory"].isin(keys)]
+
+
+
 
 
 
