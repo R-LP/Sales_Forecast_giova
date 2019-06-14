@@ -150,10 +150,9 @@ class Data(object):
 
     def filter_on_products(self, keys):
         print(f">> Filtering on given list of products")
-
         if not isinstance(keys, list):
-            keys =list(keys.data["ProductCategory"])
-        self.data = self.data.loc[self.data["ProductCategory"].isin(keys)]
+            keys =list(keys.data["ProductEnglishname"])
+        self.data = self.data.loc[self.data["ProductEnglishname"].isin(keys)]
 
 
 
@@ -231,6 +230,72 @@ class TransactionsAggregated(Data):
             self.data = data
         else:
             return data
+
+
+# DATA MANIPULATION
+def clean_returns(self):
+    self.data.loc[self.data["SalesQuantity"] < 0, "SalesQuantity"] = 0.0
+
+
+def compute_weekly_temporal_features(self):
+    print(">> Computing weekly temporal features")
+    self.data["week_of_month"] = self.data["OrderDate"].map(lambda x: f"WN{(x.day//7)+1}")
+    self.data["week_of_year"] = self.data["OrderDate"].map(lambda x : f"W{x.week}")
+
+
+class TransactionsProduct(TransactionsAggregated):
+    def __init__(self, data = None):
+        super().__init__(data = data)
+
+    # -----------------------------------------------------------------------------------
+    # BUILD DATA
+
+    def get_data_from_file(self, filepath, keys = None, weekly = True, inplace = True):
+        data = TransactionsMonthlyGranular(filepath)
+        if keys is not None:
+            data.filter_on_products(keys)
+        data = data.groupby_product(weekly = weekly)
+        if inplace:
+            self.data = data
+        else:
+            return data
+
+
+    def build_time_series_data(self):
+        print(">> Pivoting to time series data")
+        data = self.data.set_index(["OrderDate", "ProductEnglishname"]).unstack("ProductEnglishname")
+        data = data.reindex(get_period_list())
+        data = data.fillna(0.0)
+        data.columns = data.columns.get_level_values(1)
+        return TransactionsProductTS(data)
+
+
+def TransactionsProductTS(Data):
+    def __init__(self, data = None, filename = None):
+        super().__init__(data = data)
+        if self.data is None:
+            self.data = read_from_processed_data_folder(filename)
+
+        def show_time_series(self):
+            pass
+
+# function to test on different kind of products (split on products)
+def train_test_split(self, test_size = 0.3, shuffle = False):
+    print(">> Spllitting in train test set")
+    unique_products = self.data["ProductEnglishname"].unique()
+    if shuffle:
+        random.shuffle(unique_products)
+    cut = int(len(unique_products)*(1-test_size))
+    products_train = unique_products[:cut]
+    products_test = unique_products[cut:]
+    print(f"... Among the {len(unique_products)} : {len(products_train)} in training set and {len(products_test)} in test set")
+    
+     
+
+
+
+
+
 
 
     
