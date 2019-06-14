@@ -158,6 +158,16 @@ class Data(object):
 
 
 
+class TransactionsMonthlyGranular(Data):
+    def __init__(self, filepath):
+        print("Loading Monthly Transaction Data")
+        self.data = pd.read_csv(filepath)
+        self.data = self.data[["CustomerID", "OrderID", "OrderDate","SalesQuantity", "SalesAmount", "Axe", "ProductCategory", "ProductSubCategory",
+        "ProductLine", "ProductSubLine", "ProductEnglishName", "CounterLocalName", "BrandName"]]
+        self.data["SalesAmount"] = self.data["SalesAmount"].map(float)
+        self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
+
+
 
 
 
