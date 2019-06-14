@@ -194,6 +194,63 @@ class TransactionsMonthlyGranular(Data):
 
 
 
+# Other Aggregation class
+class TransactionsAggregated(Data):
+    def __init__(self, data = None):
+        if data is not None:
+            print(">> Initialization with preloaded data")
+            self.data
+        else:
+            print(">> Initialization with no loaded data")
+
+    # ---------------------------------------
+    # BUILD DATA
+    def get_data_from_files(self, filepaths, keys = None, weekly = True, inplace = True):
+        if isinstance(filepaths, str): filepaths = [filepaths]
+        for i, filepath in enumerate(tqdm_notebook(filepaths)):
+            df = self.get_data_from_file(filepath, keys, weekly, inplace = False)
+            if i == 0:
+                data = df
+            else:
+                data = data.append(df, ignore_index = True)
+
+        # Groupby if weekly
+        if weekly:
+            data = data.groupby(["OrderDate", "ProductEnglishname"], as_index = False).sum()
+            if inplace:
+                self.data = data
+            else:
+                return data
+    
+
+    def get_data_from_transaction_folder(self, inplace = True):
+        print(">> Loading data from all transactions file")
+        paths = get_transactions_files_list()
+        data = self.get_data_from_files(paths, inplace = False)
+        if inplace:
+            self.data = data
+        else:
+            return data
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
