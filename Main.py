@@ -1,12 +1,13 @@
 from data_processing import *
 
-data = data_processing.read_from_transactions_folder("Lancome_sub_sub.csv")
 
-data = Data(data)
+data_obj = Data()
+#data_obj.data = read_from_transactions_folder("Lancome_sub_sub.csv")
 
 
-periods = get_period_list(freq = 'D')
-print(periods)
+data_obj.data = data_obj.read_from_transactions_folder("Lancome_sub_sub.csv")
+print(data_obj.data)
+
 
 
 

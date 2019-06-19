@@ -13,77 +13,39 @@ TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data
 DATA_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/2_Processed_Data"
 
 
-# Return all paths to files in the transactions files folder
-def get_transactions_files_list():
-    files = os.listdir(TRANSACTIONS_FOLDER)
-    files = [os.path.join(TRANSACTIONS_FOLDER, file) for file in files]
-    return files
-
-
-def read_from_processed_data_folder(filename, folder = None):
-    if folder is None: folder = DATA_FOLDER
-    path = os.path.join(folder, filename)
-    print(f"... Read file at {path}")
-    if filename.endswith(".csv"):
-        return pd.read_csv(path)
-    else:
-        return pd.read_pickle(path)
-
-
-def is_in_processed_data_folder(filename):
-    return filename in os.listdir(DATA_FOLDER)
-
-
-def read_from_transactions_folder(filename):
-    if filename.endswith(".csv"):
-        return pd.read_csv(os.path.join(TRANSACTIONS_FOLDER, filename))
-    else:
-        return pd.read_pickle(os.path.join(TRANSACTIONS_FOLDER, filename))
-
-
-def save_to_processed_data_folder(filename):
-    path = os.path.join(DATA_FOLDER, filename)
-    data.to_csv(path, index = False)
-    print("File saved at {}".format(path))
-
-
-def save_pickle_to_processed_data_folder(data, name):
-    path = os.path.join(DATA_FOLDER, name)
-    data.to_pickle(path)
-    print("File saved at {}".format(path))    
-
-
-def get_period_list(min_date = "2016-04-01", max_date = "2018-12-31", freq = 'W'):
-    if freq is not 'W':
-        return pd.date_range(min_date, max_date,  freq = freq)
-    else:
-        return pd.date_range(min_date, max_date,  freq = 'W')
-
-
-def convert_to_week_date(x, periods):
-    if pd.isnull(x):
-        return x
-    else:
-        if x < periods[0] or x > periods[-1]:
-            return None
-        else:
-            return periods[periods.get_loc(x, method = "pad")]
-
-
-def save_json(d, filepath):
-    with open(filepath, "w", encoding ="utf8") as file:
-        json.dump(d, file, indent = 4, sort_keys = True)
-
-
-def read_json(filepath):
-    return json.loads(open(filepath, "r", encoding = "utf8").read())
-
-
 # The class data inherits from the class of the object intance
 class Data(object):
-    def _repr_html(self):
-        return self.data.head()._repr_html_()
-    
+
+    @staticmethod
+    def is_in_processed_data_folder(filename):
+        return filename in os.listdir(DATA_FOLDER)
+
+    # Return all paths to files in the transactions files folder
+    @staticmethod
+    def get_transactions_files_list():
+        files = os.listdir(TRANSACTIONS_FOLDER)
+        files = [os.path.join(TRANSACTIONS_FOLDER, file) for file in files]
+        return files
+
+
+    @staticmethod
+    def read_from_processed_data_folder(filename, folder = None):
+        if folder is None: 
+            folder = DATA_FOLDER
+        path = os.path.join(folder, filename)
+        print(f"... Read file at {path}")
+        if filename.endswith(".csv"):
+            return pd.read_csv(path)
+        else:
+            return pd.read_pickle(path)  
+
+
+    @staticmethod
+    def save_to_processed_data_folder(filename):
+        path = os.path.join(DATA_FOLDER, filename)
+        data.to_csv(path, index = False)
+        print("File saved at {}".format(path)) 
+
 
     def show_missing_values(self):
         missingno.matrix(self.data)
@@ -100,6 +62,25 @@ class Data(object):
         self.data[col] = self.data[col].map(lambda x: convert_to_week_date(x, periods))
 
 
+    @staticmethod
+    def get_period_list(min_date = "2016-04-01", max_date = "2018-12-31", freq = 'W'):
+        if freq is not 'W':
+            return pd.date_range(min_date, max_date,  freq = freq)
+        else:
+            return pd.date_range(min_date, max_date,  freq = 'W')
+
+    @staticmethod
+    def convert_to_week_date(x, periods):
+        if pd.isnull(x):
+            return x
+        else:
+            if x < periods[0] or x > periods[-1]:
+                return None
+            else:
+                return periods[periods.get_loc(x, method = "pad")]
+
+
+
     # To fix with L'Oreal format (pd.to_datetime)
     def to_datetime(self, force = False):
         cols = ["OrderDate"]
@@ -112,7 +93,6 @@ class Data(object):
                         self.converted_date_cols.append(col)
                     else:
                         self.converted_date_cols = [col]
-
             else:
                 print("Not in columns")
 
@@ -153,6 +133,14 @@ class Data(object):
     def get_columns(self):
         return self.data.columns
 
+    
+    @staticmethod
+    def read_from_transactions_folder(filename):
+        if filename.endswith(".csv"):
+            return pd.read_csv(os.path.join(TRANSACTIONS_FOLDER, filename))
+        else:
+            return pd.read_pickle(os.path.join(TRANSACTIONS_FOLDER, filename))
+    
 
     def filter_on_products(self, keys):
         print(f">> Filtering on given list of products")
