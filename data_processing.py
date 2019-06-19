@@ -22,19 +22,19 @@ def get_transactions_files_list():
 
 def read_from_processed_data_folder(filename, folder = None):
     if folder is None: folder = DATA_FOLDER
-        path = os.path.join(folder, filename)
-        print(f"... Read file at {path}")
-        if filename.endswith(".csv"):
-            return pd.read_csv(path)
-        else:
-            return pd.read_pickle(path)
+    path = os.path.join(folder, filename)
+    print(f"... Read file at {path}")
+    if filename.endswith(".csv"):
+        return pd.read_csv(path)
+    else:
+        return pd.read_pickle(path)
 
 
 def is_in_processed_data_folder(filename):
     return filename in os.listdir(DATA_FOLDER)
 
 
-def read_from_transactions_foler(filename):
+def read_from_transactions_folder(filename):
     if filename.endswith(".csv"):
         return pd.read_csv(os.path.join(TRANSACTIONS_FOLDER, filename))
     else:
@@ -44,17 +44,20 @@ def read_from_transactions_foler(filename):
 def save_to_processed_data_folder(filename):
     path = os.path.join(DATA_FOLDER, filename)
     data.to_csv(path, index = False)
-    print(f"... File saved at {}".format(path))
+    print("File saved at {}".format(path))
 
 
 def save_pickle_to_processed_data_folder(data, name):
     path = os.path.join(DATA_FOLDER, name)
     data.to_pickle(path)
-    print(f"... File saved at {}".format(path))    
+    print("File saved at {}".format(path))    
 
 
-def get_period_list(min_date = "2015-01-01", max_date = "2018-12-31"):
-    return pd.date_range(min_date, max_date,  freq = 'W')
+def get_period_list(min_date = "2016-04-01", max_date = "2018-12-31", freq = 'W'):
+    if freq is not 'W':
+        return pd.date_range(min_date, max_date,  freq = freq)
+    else:
+        return pd.date_range(min_date, max_date,  freq = 'W')
 
 
 def convert_to_week_date(x, periods):
@@ -79,7 +82,7 @@ def read_json(filepath):
 # The class data inherits from the class of the object intance
 class Data(object):
     def _repr_html(self):
-        retunr self.data.head()._repr_html_()
+        return self.data.head()._repr_html_()
     
 
     def show_missing_values(self):
@@ -96,19 +99,22 @@ class Data(object):
         periods = get_period_list()
         self.data[col] = self.data[col].map(lambda x: convert_to_week_date(x, periods))
 
+
     # To fix with L'Oreal format (pd.to_datetime)
     def to_datetime(self, force = False):
-        cols = ["Date_Transaction"]
+        cols = ["OrderDate"]
         for col in cols:
             if col in self.data.columns:
                 if force or not hasattr(self, "converted_date_cols") or col not in self.converted_date_cols:
                     print(f">> converting column {col} to datetime")
                     self.convert_column_to_datetime(col)
-
                     if hasattr(self, "converted_date_cols"):
                         self.converted_date_cols.append(col)
                     else:
                         self.converted_date_cols = [col]
+
+            else:
+                print("Not in columns")
 
 
     def create_temporal_features(self, column):
@@ -155,7 +161,7 @@ class Data(object):
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(keys)]
 
 
-
+# Class to use
 class TransactionsMonthlyGranular(Data):
     def __init__(self, filepath):
         print("Loading Monthly Transaction Data")
@@ -182,7 +188,7 @@ class TransactionsMonthlyGranular(Data):
 
 
     def groupby_product_store(self, weekly = True):
-        print(>> "Aggregating transacions at product and store level")
+        print(">> Aggregating transacions at product and store level")
         self.data = self.data.groupby(["ProductEnglishname", "OrderDate", "CounterLocalName"], as_index = False)["SalesQuantity"].sum()
         if weekly:
             print(">> Aggregating transactions by week")
