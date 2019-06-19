@@ -39,6 +39,14 @@ class Data(object):
         else:
             return pd.read_pickle(path)  
 
+            
+    @staticmethod
+    def read_from_transactions_folder(filename):
+        if filename.endswith(".csv"):
+            return pd.read_csv(os.path.join(TRANSACTIONS_FOLDER, filename))
+        else:
+            return pd.read_pickle(os.path.join(TRANSACTIONS_FOLDER, filename))
+
 
     @staticmethod
     def save_to_processed_data_folder(filename):
@@ -69,6 +77,7 @@ class Data(object):
         else:
             return pd.date_range(min_date, max_date,  freq = 'W')
 
+
     @staticmethod
     def convert_to_week_date(x, periods):
         if pd.isnull(x):
@@ -78,7 +87,6 @@ class Data(object):
                 return None
             else:
                 return periods[periods.get_loc(x, method = "pad")]
-
 
 
     # To fix with L'Oreal format (pd.to_datetime)
@@ -132,14 +140,6 @@ class Data(object):
 
     def get_columns(self):
         return self.data.columns
-
-    
-    @staticmethod
-    def read_from_transactions_folder(filename):
-        if filename.endswith(".csv"):
-            return pd.read_csv(os.path.join(TRANSACTIONS_FOLDER, filename))
-        else:
-            return pd.read_pickle(os.path.join(TRANSACTIONS_FOLDER, filename))
     
 
     def filter_on_products(self, keys):
