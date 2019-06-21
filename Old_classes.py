@@ -1,3 +1,46 @@
+# Class to use
+class TransactionsMonthlyGranular(Data):
+    def __init__(self, filename):
+        print(f">> Loading Monthly Transaction Data")
+        self.data = self.read_from_transactions_folder(filename)
+        #self.data = pd.read_csv(filepath)
+        self.data = self.data[["CustomerID", "OrderID", "OrderDate","SalesQuantity",
+        "SalesAmount", "Axe", "ProductCategory", "ProductSubCategory",
+        "ProductLine", "ProductSubLine", "ProductEnglishname", "CounterLocalName"]]
+        self.data["SalesAmount"] = self.data["SalesAmount"].map(float)
+        self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
+        self.to_datetime(force = True)
+        print(self.data.columns)
+        self.create_temporal_features("OrderDate")
+        print(self.data.columns)
+
+
+    # Groupby ProductEnglishName with different granularities and return a column with correct date format
+    def groupby_product(self, weekly = True):
+        print(">> Aggregating transactions at productenglishname level")
+        self.data = self.data.groupby(["ProductEnglishname", "year", "month", "day"],  as_index = False)["SalesQuantity"].sum()
+        if weekly:
+            print(">> Aggregating transactions at a weekly level")
+            self.data = self.data \
+                .groupby("ProductEnglishname", as_index = False) \
+                .apply(lambda x:x.set_index("OrderDate").resample("W").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
+                .reset_index() \
+                .drop("level_0", axis = 1)
+            self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
+        return self.data
+
+
+    def groupby_product_store(self, weekly = True):
+        print(">> Aggregating transacions at product and store level")
+        self.data = self.data.groupby(["ProductEnglishname", "OrderDate", "CounterLocalName"], as_index = False)["SalesQuantity"].sum()
+        if weekly:
+            print(">> Aggregating transactions by week")
+            self.to_datetime(force = True)
+            self.data = self.data.groupby(["ProductEnglishname", "CounterLocalName"], as_index = False).apply(lambda x:x.set_index("OrderDate").resample("W"))
+            self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
+        return self.data
+
+
 # Other Aggregation class
 class TransactionsAggregated(Data):
     def __init__(self, data = None):

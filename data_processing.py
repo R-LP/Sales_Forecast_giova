@@ -157,22 +157,29 @@ class TransactionsMonthlyGranular(Data):
         "ProductLine", "ProductSubLine", "ProductEnglishname", "CounterLocalName"]]
         self.data["SalesAmount"] = self.data["SalesAmount"].map(float)
         self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
-        self.to_datetime()
+        self.to_datetime(force = True)
         self.create_temporal_features("OrderDate")
 
-    # Groupby ProductEnglishName
-    def groupby_product(self, weekly = True):
-        print(">> Aggregating trnsactions at productenglishname level")
-        self.data = self.data.groupby(["ProductEnglishname", "OrderDate"],  as_index = False)["SalesQuantity"].sum()
-        if weekly:
-            print(">> Aggregating transactions at a weekly level")
-            self.to_datetime(force = True)
-            self.data = self.data \
-                .groupby("ProductEnglishname", as_index = False) \
-                .apply(lambda x:x.set_index("OrderDate").resample("W").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
-                .reset_index() \
-                .drop("level_0", axis = 1)
-            self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
+
+    # Groupby ProductEnglishName with different granularities and return a column with correct date format
+    def groupby_product(self, granularity):
+        if granularity == "day":
+            print(f">> Aggregating transactions at productenglishname level and daily granularity")
+            self.data = self.data.groupby(["ProductEnglishname", "year", "month", "day"],
+                        as_index = False)["SalesQuantity"].sum()
+
+        if granularity == "week":
+            print(f">> Aggregating transactions at productenglishname level and weekly granularity")
+            self.data = self.data.groupby(["ProductEnglishname", "year", "month", "week"],
+                        as_index = False)["SalesQuantity"].sum()
+
+        if granularity == "month":
+            print(f">> Aggregating transactions at productenglishname level and monthly granularity")
+            self.data = self.data.groupby(["ProductEnglishname", "year", "month"],
+                        as_index = False)["SalesQuantity"].sum()
+
+        self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
+        self.data["SalesQuantity"][self.data["SalesQuantity"] < 0] = 0
         return self.data
 
 
