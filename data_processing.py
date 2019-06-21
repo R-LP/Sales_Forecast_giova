@@ -151,7 +151,6 @@ class TransactionsMonthlyGranular(Data):
     def __init__(self, filename):
         print(f">> Loading Monthly Transaction Data")
         self.data = self.read_from_transactions_folder(filename)
-        #self.data = pd.read_csv(filepath)
         self.data = self.data[["CustomerID", "OrderID", "OrderDate","SalesQuantity",
         "SalesAmount", "Axe", "ProductCategory", "ProductSubCategory",
         "ProductLine", "ProductSubLine", "ProductEnglishname", "CounterLocalName"]]
@@ -167,16 +166,28 @@ class TransactionsMonthlyGranular(Data):
             print(f">> Aggregating transactions at productenglishname level and daily granularity")
             self.data = self.data.groupby(["ProductEnglishname", "year", "month", "day"],
                         as_index = False)["SalesQuantity"].sum()
+            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
+            self.period_list = self.get_period_list(freq = 'D')
 
         if granularity == "week":
             print(f">> Aggregating transactions at productenglishname level and weekly granularity")
-            self.data = self.data.groupby(["ProductEnglishname", "year", "month", "week"],
-                        as_index = False)["SalesQuantity"].sum()
+            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
+            self.data = self.data \
+                .groupby("ProductEnglishname", as_index = False) \
+                .apply(lambda x:x.set_index("OrderDate").resample("W").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
+                .reset_index() \
+                .drop("level_0", axis = 1)
+            self.period_list = self.get_period_list(freq = 'W')
 
         if granularity == "month":
             print(f">> Aggregating transactions at productenglishname level and monthly granularity")
-            self.data = self.data.groupby(["ProductEnglishname", "year", "month"],
-                        as_index = False)["SalesQuantity"].sum()
+            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
+            self.data = self.data \
+                .groupby("ProductEnglishname", as_index = False) \
+                .apply(lambda x:x.set_index("OrderDate").resample("M").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
+                .reset_index() \
+                .drop("level_0", axis = 1)            
+            self.period_list = self.get_period_list(freq = 'M')
 
         self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
         self.data["SalesQuantity"][self.data["SalesQuantity"] < 0] = 0
@@ -193,12 +204,16 @@ class TransactionsMonthlyGranular(Data):
             self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
         return self.data
 
+    # ProductEnglishname is a list of product
+    def Product_sales(self, ProductEnglishname, granularity):
+        #if not isinstance(ProductEnglishname, (list, )):
+        #    print(f">> The product entered as an input should be a list of product")
+        if granularity == 'day':
+            self.groupby_product("day")
 
+# add function that returns englishname + date matching 
 
-       
-
-
-
+#self.data = self.data.loc[self.data["ProductEnglishname"].isin(keys)]
 
     
 
