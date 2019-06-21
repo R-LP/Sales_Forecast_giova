@@ -191,6 +191,8 @@ class TransactionsMonthlyGranular(Data):
 
         self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
         self.data["SalesQuantity"][self.data["SalesQuantity"] < 0] = 0
+        self.period_list = pd.DataFrame(self.period_list)
+        self.period_list.columns = ['OrderDate']
         return self.data
 
 
@@ -206,14 +208,23 @@ class TransactionsMonthlyGranular(Data):
 
     # ProductEnglishname is a list of product
     def Product_sales(self, ProductEnglishname, granularity):
-        #if not isinstance(ProductEnglishname, (list, )):
-        #    print(f">> The product entered as an input should be a list of product")
+        if type(ProductEnglishname) is not list:
+            print(f">> The product entered as an input should be a list of product")
+        
         if granularity == 'day':
             self.groupby_product("day")
 
-# add function that returns englishname + date matching 
+        if granularity == 'week':
+            self.groupby_product("week")
 
-#self.data = self.data.loc[self.data["ProductEnglishname"].isin(keys)]
+        if granularity == 'month':
+            self.groupby_product("month")
+
+        self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
+        self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
+        self.data = self.period_list.merge(self.data, 'right')
+
+        return self.data
 
     
 
