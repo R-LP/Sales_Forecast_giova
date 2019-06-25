@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 #-----------------------------------------------------------------------------------------
 
 TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
+TRANSACTIONS_FOLDER = "C:/Users/jean.debeney/OneDrive - Ekimetrics/Documents/Projects/R&D/SKU_forecast/Raw_data"
 DATA_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/2_Processed_Data"
 
 
@@ -211,14 +212,7 @@ class TransactionsMonthlyGranular(Data):
         if type(ProductEnglishname) is not list:
             print(f">> The product entered as an input should be a list of product")
         
-        if granularity == 'day':
-            self.groupby_product("day")
-
-        if granularity == 'week':
-            self.groupby_product("week")
-
-        if granularity == 'month':
-            self.groupby_product("month")
+        self.groupby_product(granularity)
 
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
