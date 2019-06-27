@@ -217,6 +217,7 @@ class TransactionsMonthlyGranular(Data):
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
         self.data = self.period_list.merge(self.data, 'right')
+        self.data["SalesQuantity"].fillna(0, inplace = True)
 
         return self.data
 
