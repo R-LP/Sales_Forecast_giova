@@ -3,6 +3,7 @@ import numpy as np
 import os
 import missingno
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 
 #-----------------------------------------------------------------------------------------
@@ -11,6 +12,7 @@ import matplotlib.pyplot as plt
 
 TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
 TRANSACTIONS_FOLDER = "C:/Users/jean.debeney/OneDrive - Ekimetrics/Documents/Projects/R&D/SKU_forecast/Raw_data"
+TRANSACTIONS_FOLDER = 'C:/Users/jean.debeney/Documents/RD/SKU_forecast/LAN/Data'
 DATA_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/2_Processed_Data"
 
 
@@ -65,13 +67,19 @@ class Data(object):
     def convert_column_to_datetime(self, col):
         self.data[col] = pd.to_datetime(self.data[col])
 
-
+    
     @staticmethod
     def get_period_list(min_date = "2019-01-01", max_date = "2019-03-31", freq = 'W'):
         if freq is not 'W':
-            return pd.date_range(min_date, max_date,  freq = freq)
+            daterange = pd.date_range(min_date, max_date,  freq = freq, tz = None).to_pydatetime()
+            daterange = pd.DataFrame(daterange)
+            daterange.columns = ["OrderDate"]
+            return daterange
         else:
-            return pd.date_range(min_date, max_date,  freq = 'W')
+            daterange = pd.date_range(min_date, max_date,  freq = 'W', tz = None).to_pydatetime()
+            daterange = pd.DataFrame(daterange)
+            daterange.columns = ["OrderDate"]
+            return daterange
 
 
     @staticmethod
@@ -91,7 +99,6 @@ class Data(object):
         self.data[col] = self.data[col].map(lambda x: self.convert_to_week_date(x, periods))
 
 
-    # To fix with L'Oreal format (pd.to_datetime)
     def to_datetime(self, force = False):
         cols = ["OrderDate"]
         for col in cols:
@@ -192,8 +199,6 @@ class TransactionsMonthlyGranular(Data):
 
         self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
         self.data["SalesQuantity"][self.data["SalesQuantity"] < 0] = 0
-        self.period_list = pd.DataFrame(self.period_list)
-        self.period_list.columns = ['OrderDate']
         return self.data
 
 
@@ -216,7 +221,7 @@ class TransactionsMonthlyGranular(Data):
 
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
-        self.data = self.period_list.merge(self.data, 'right')
+        self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
         self.data["SalesQuantity"].fillna(0, inplace = True)
 
         return self.data
