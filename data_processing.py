@@ -11,8 +11,8 @@ from datetime import datetime
 #-----------------------------------------------------------------------------------------
 
 TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
-TRANSACTIONS_FOLDER = "C:/Users/jean.debeney/OneDrive - Ekimetrics/Documents/Projects/R&D/SKU_forecast/Raw_data"
-TRANSACTIONS_FOLDER = 'C:/Users/jean.debeney/Documents/RD/SKU_forecast/LAN/Data'
+#TRANSACTIONS_FOLDER = "C:/Users/jean.debeney/OneDrive - Ekimetrics/Documents/Projects/R&D/SKU_forecast/Raw_data"
+#TRANSACTIONS_FOLDER = 'C:/Users/jean.debeney/Documents/RD/SKU_forecast/LAN/Data'
 DATA_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/2_Processed_Data"
 
 
@@ -23,6 +23,7 @@ class Data(object):
     @staticmethod
     def is_in_processed_data_folder(filename):
         return filename in os.listdir(DATA_FOLDER)
+
 
     # Return all paths to files in the transactions files folder
     @staticmethod
