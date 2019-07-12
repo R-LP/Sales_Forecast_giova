@@ -70,7 +70,7 @@ class Data(object):
 
     
     @staticmethod
-    def get_period_list(min_date = "2019-01-01", max_date = "2019-03-31", freq = 'W'):
+    def get_period_list(min_date = "2017-07-01", max_date = "2019-06-30", freq = 'W'):
         if freq is not 'W':
             daterange = pd.date_range(min_date, max_date,  freq = freq, tz = None).to_pydatetime()
             daterange = pd.DataFrame(daterange)
@@ -81,23 +81,6 @@ class Data(object):
             daterange = pd.DataFrame(daterange)
             daterange.columns = ["OrderDate"]
             return daterange
-
-
-    @staticmethod
-    def convert_to_week_date(x, periods):
-        if pd.isnull(x):
-            return x
-        else:
-            if x < periods[0] or x > periods[-1]:
-                return None
-            else:
-                return periods[periods.get_loc(x, method = "pad")]
-
-
-    def convert_column_to_weekdate(self, col, freq = 'W'):
-        print(f">> converting column {col} to weekdate")
-        periods = self.get_period_list(freq = freq)
-        self.data[col] = self.data[col].map(lambda x: self.convert_to_week_date(x, periods))
 
 
     def to_datetime(self, force = False):
@@ -170,13 +153,13 @@ class TransactionsMonthlyGranular(Data):
 
 
     # Groupby ProductEnglishName with different granularities and return a column with correct date format
-    def groupby_product(self, granularity):
+    def groupby_product(self, granularity, min_date, max_date):
         if granularity == "day":
             print(f">> Aggregating transactions at productenglishname level and daily granularity")
             self.data = self.data.groupby(["ProductEnglishname", "year", "month", "day"],
                         as_index = False)["SalesQuantity"].sum()
             self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
-            self.period_list = self.get_period_list(freq = 'D')
+            self.period_list = self.get_period_list(min_date, max_date, freq = 'D')
 
         if granularity == "week":
             print(f">> Aggregating transactions at productenglishname level and weekly granularity")
@@ -186,7 +169,7 @@ class TransactionsMonthlyGranular(Data):
                 .apply(lambda x:x.set_index("OrderDate").resample("W").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
                 .reset_index() \
                 .drop("level_0", axis = 1)
-            self.period_list = self.get_period_list(freq = 'W')
+            self.period_list = self.get_period_list(min_date, max_date, freq = 'W')
 
         if granularity == "month":
             print(f">> Aggregating transactions at productenglishname level and monthly granularity")
@@ -196,7 +179,7 @@ class TransactionsMonthlyGranular(Data):
                 .apply(lambda x:x.set_index("OrderDate").resample("M").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
                 .reset_index() \
                 .drop("level_0", axis = 1)            
-            self.period_list = self.get_period_list(freq = 'M')
+            self.period_list = self.get_period_list(min_date, max_date, freq = 'M')
 
         self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
         self.data["SalesQuantity"][self.data["SalesQuantity"] < 0] = 0
@@ -214,11 +197,11 @@ class TransactionsMonthlyGranular(Data):
         return self.data
 
     # ProductEnglishname is a list of product
-    def Product_sales(self, ProductEnglishname, granularity):
+    def Product_sales(self, ProductEnglishname, granularity, min_date, max_date):
         if type(ProductEnglishname) is not list:
             print(f">> The product entered as an input should be a list of product")
         
-        self.groupby_product(granularity)
+        self.groupby_product(granularity, min_date, max_date)
 
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
