@@ -138,7 +138,6 @@ class Data(object):
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(keys)]
 
 
-# Class to use
 class TransactionsMonthlyGranular(Data):
     def __init__(self, filename):
         print(f">> Loading Monthly Transaction Data")
@@ -157,7 +156,7 @@ class TransactionsMonthlyGranular(Data):
         if granularity == "day":
             print(f">> Aggregating transactions at productenglishname level and daily granularity")
             self.data = self.data.groupby(["ProductEnglishname", "year", "month", "day"],
-                        as_index = False)["SalesQuantity"].sum()
+                                            as_index = False)["SalesQuantity"].sum()
             self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
             self.period_list = self.get_period_list(min_date, max_date, freq = 'D')
 
@@ -207,7 +206,7 @@ class TransactionsMonthlyGranular(Data):
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
         self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
         self.data["SalesQuantity"].fillna(0, inplace = True)
-
+        self.create_temporal_features("OrderDate")
         return self.data
 
     
