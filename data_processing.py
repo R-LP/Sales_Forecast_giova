@@ -105,7 +105,6 @@ class Data(object):
         self.data["week"] = date_column.map(lambda x : x.week)
         self.data["day"] = date_column.map(lambda x : x.day)
         self.data["dayofweek"] = date_column.map(lambda x : x.dayofweek)
-        self.data.drop(column, axis = 1,  inplace = True)
 
 
     def reload_from_file(self, name = None, folder = None):
@@ -157,12 +156,10 @@ class TransactionsMonthlyGranular(Data):
             print(f">> Aggregating transactions at productenglishname level and daily granularity")
             self.data = self.data.groupby(["ProductEnglishname", "year", "month", "day"],
                                             as_index = False)["SalesQuantity"].sum()
-            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
             self.period_list = self.get_period_list(min_date, max_date, freq = 'D')
 
         if granularity == "week":
             print(f">> Aggregating transactions at productenglishname level and weekly granularity")
-            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
             self.data = self.data \
                 .groupby("ProductEnglishname", as_index = False) \
                 .apply(lambda x:x.set_index("OrderDate").resample("W").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
@@ -172,7 +169,6 @@ class TransactionsMonthlyGranular(Data):
 
         if granularity == "month":
             print(f">> Aggregating transactions at productenglishname level and monthly granularity")
-            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
             self.data = self.data \
                 .groupby("ProductEnglishname", as_index = False) \
                 .apply(lambda x:x.set_index("OrderDate").resample("M").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
