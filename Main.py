@@ -3,11 +3,11 @@ warnings.filterwarnings("ignore")
 from Predictors import *
 
 # For prediction
-prediction_length = 50
+prediction_length = 30
 freq = "D"
 
 # For neural network architecture
-epochs = 2
+epochs = 200
 num_layers = 4
 batch_size = 16
 

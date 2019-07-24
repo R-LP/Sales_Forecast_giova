@@ -3,17 +3,22 @@ import gluonts
 from gluonts.dataset.common import ListDataset
 from gluonts.model.deepar import DeepAREstimator
 from gluonts.trainer import Trainer
-from gluonts.dataset.util import to_pandas
 from gluonts.evaluation import Evaluator
 from gluonts.evaluation.backtest import make_evaluation_predictions
 from gluonts.trainer import Trainer
 from itertools import islice
-from gluonts.model.prophet import ProphetPredictor
-from gluonts.model.gp_forecaster import GaussianProcessEstimator
-from gluonts.model.wavenet import WaveNetEstimator
-from gluonts.transform import AddAgeFeature
-from gluonts.transform import AddObservedValuesIndicator
 from gluonts.transform import FieldName
+from pathlib import Path
+from gluonts.model.predictor import Predictor
+from gluonts.transform import (
+    AddAgeFeature,
+    AddObservedValuesIndicator,
+    Chain,
+    #ExpectedNumInstanceSampler,
+    #FieldName,
+    #InstanceSplitter,
+    #SetFieldIfNotPresent,
+)
 
 
 
@@ -162,48 +167,66 @@ list_products = ["CONF TONIQUE B400ML",
 
 #list_products = ["GENIFIQUE 13 SERUM B30ML", "REN FRENCH LIFT P50ML"]
 
+def create_transformation(freq, context_length, prediction_length):
+    return Chain(
+        [
+            AddObservedValuesIndicator(
+                target_field=FieldName.TARGET,
+                output_field=FieldName.OBSERVED_VALUES,
+            ),
+            AddAgeFeature(
+                target_field=FieldName.TARGET,
+                output_field=FieldName.FEAT_AGE,
+                pred_length=prediction_length,
+                log_scale=True,
+            ),
+        ]
+    )
+
+
 def train_test_set(min_date, max_date, prediction_length, freq):
         # Load and process transactions data
-        Transactions_obj = TransactionsMonthlyGranular("Lanc_sub_sub.csv")
+        Transactions_obj = TransactionsMonthlyGranular("LAN.csv")
         data = Transactions_obj.Product_sales(list_products, "day", min_date,  max_date)
         ext_data = pd.read_csv("P:\\0. R&D\\6. SKU sales forecast\\1_Raw data\\Promo_data.csv")
         ext_data["OrderDate"] = pd.to_datetime(ext_data["OrderDate"])
         data = data.merge(ext_data, how = 'left', on = "OrderDate")
-        data["Constant_feat"] = 1
-
         # Turning the dataset into a correct entry for the DeepAR algorithm        
         [f"FieldName.{k} = '{v}'" for k, v in FieldName.__dict__.items() if not k.startswith('_')]
         train = data[:-prediction_length]
-        test = data[-prediction_length:]
-        #train_ds = ListDataset([{"start": train.OrderDate.index[0], "target": train.SalesQuantity}], freq = freq)
-        #test_ds = ListDataset([{"start": data.OrderDate.index[-prediction_length], "target": data.SalesQuantity}], freq = freq)
-        train_ds = ListDataset([{FieldName.TARGET: target, 
-                                FieldName.START: start,
-                                FieldName.FEAT_DYNAMIC_REAL: fdr,
-                                FieldName.FEAT_STATIC_CAT: fsc} 
-                                for (target, start, fdr, fsc) in zip(train.SalesQuantity, 
-                                                             train.OrderDate.index[0], 
-                                                             train[["GWP", "VS"]], 
-                                                             train.Constant_feat)],
-                                freq=freq)
-        
-        test_ds = ListDataset([{FieldName.TARGET: target, 
-                                FieldName.START: start,
-                                FieldName.FEAT_DYNAMIC_REAL: fdr,
-                                FieldName.FEAT_STATIC_CAT: fsc} 
-                                for (target, start, fdr, fsc) in zip(data.SalesQuantity, 
-                                                             data.OrderDate.index[-prediction_length], 
-                                                             data[["GWP", "VS"]], 
-                                                             data.Constant_feat)],
+
+        # Ability to add feat_static_cat (static categorical), feat_static_real (static real), feat_dynamic_cat, feat_dynamic_real (dyamic)
+        train_ds = ListDataset([{FieldName.TARGET: train.SalesQuantity, 
+                                FieldName.START: train.OrderDate.index[0],
+                                FieldName.FEAT_DYNAMIC_REAL: train[["GWP", "VS", "year", "month", "week", "day", "dayofweek"]],
+                                #FieldName.FEAT_STATIC_REAL: train[["month", "week", "day", "dayofweek"]],
+                                }], 
                                 freq=freq)
 
+        test_ds = ListDataset([{FieldName.TARGET: data.SalesQuantity, 
+                        FieldName.START: data.OrderDate.index[-prediction_length],
+                        FieldName.FEAT_DYNAMIC_REAL: data[["GWP", "VS", "year", "month", "week", "day", "dayofweek"]],
+                        #FieldName.FEAT_STATIC_REAL: data[["month", "week", "day", "dayofweek"]],
+                        }], 
+                        freq=freq)
+        transformation = create_transformation(freq = freq, context_length = len(data.OrderDate) - prediction_length,  prediction_length = prediction_length)
+        #train_tf = transformation(iter(train_ds), is_train = True)
+        #test_tf = transformation(iter(test_ds), is_train = False)
+
         return train_ds, test_ds
+
+
+def load_predictor():
+        predictor_deserialized = Predictor.deserialize(Path("P:/0. R&D/6. SKU sales forecast/4_Predictors/"))
+        return predictor_deserialized
 
 
 def train_predictor(freq, prediction_length, train_ds, epochs, num_layers, batch_size):
         estimator = DeepAREstimator(freq=freq, prediction_length=prediction_length,
                                         trainer=Trainer(ctx="cpu", epochs=epochs, batch_size = batch_size, num_batches_per_epoch = 100), num_layers = num_layers)
         predictor = estimator.train(training_data=train_ds)
+        # Save the predictor
+        predictor.serialize(Path("P:/0. R&D/6. SKU sales forecast/4_Predictors/"))
         return predictor
 
 

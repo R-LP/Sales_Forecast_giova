@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 #-----------------------------------------------------------------------------------------
-# HELPER FUNCTIONS
+# HELPER \\
 #-----------------------------------------------------------------------------------------
 
 TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
@@ -194,13 +194,12 @@ class TransactionsMonthlyGranular(Data):
             self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
         return self.data
 
+
     # ProductEnglishname is a list of product
     def Product_sales(self, ProductEnglishname, granularity, min_date, max_date):
         if type(ProductEnglishname) is not list:
             print(f">> The product entered as an input should be a list of product")
-        
         self.groupby_product(granularity, min_date, max_date)
-
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
         self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
