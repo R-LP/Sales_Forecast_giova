@@ -70,7 +70,7 @@ class Data(object):
 
     
     @staticmethod
-    def get_period_list(min_date = "2017-07-01", max_date = "2019-06-30", freq = 'W'):
+    def get_period_list(min_date = "2016-07-01", max_date = "2019-06-30", freq = 'W'):
         if freq is not 'W':
             daterange = pd.date_range(min_date, max_date,  freq = freq, tz = None).to_pydatetime()
             daterange = pd.DataFrame(daterange)
@@ -157,6 +157,7 @@ class TransactionsMonthlyGranular(Data):
             self.data = self.data.groupby(["ProductEnglishname", "year", "month", "day"],
                                             as_index = False)["SalesQuantity"].sum()
             self.period_list = self.get_period_list(min_date, max_date, freq = 'D')
+            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
 
         if granularity == "week":
             print(f">> Aggregating transactions at productenglishname level and weekly granularity")
@@ -165,6 +166,7 @@ class TransactionsMonthlyGranular(Data):
                 .apply(lambda x:x.set_index("OrderDate").resample("W").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
                 .reset_index() \
                 .drop("level_0", axis = 1)
+            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
             self.period_list = self.get_period_list(min_date, max_date, freq = 'W')
 
         if granularity == "month":
@@ -173,7 +175,8 @@ class TransactionsMonthlyGranular(Data):
                 .groupby("ProductEnglishname", as_index = False) \
                 .apply(lambda x:x.set_index("OrderDate").resample("M").agg({"ProductEnglishname" : "first", "SalesQuantity" : "sum"})) \
                 .reset_index() \
-                .drop("level_0", axis = 1)            
+                .drop("level_0", axis = 1)
+            self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])       
             self.period_list = self.get_period_list(min_date, max_date, freq = 'M')
 
         self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
@@ -203,6 +206,7 @@ class TransactionsMonthlyGranular(Data):
         self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
         self.data["SalesQuantity"].fillna(0, inplace = True)
         self.create_temporal_features("OrderDate")
+        self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
         return self.data
 
     

@@ -2,17 +2,65 @@ import warnings
 warnings.filterwarnings("ignore")
 from Predictors import *
 
+# For prediction
+prediction_length = 50
+freq = "D"
 
-prediction_length = 40
-train_ds, test_ds = train_test_set(min_date = "2016-07-01", max_date = "2019-06-30",
-                                                        prediction_length = prediction_length)
+# For neural network architecture
+epochs = 2
+num_layers = 4
+batch_size = 16
 
 
-predictor = train_predictor(freq = "D", prediction_length = prediction_length, train_ds = train_ds)
+# Draw test and train sets
+train_ds, test_ds = train_test_set(min_date = "2016-07-01", max_date = "2019-05-20",
+                                                        prediction_length = prediction_length, freq = freq)
+
+# Train the model
+predictor = train_predictor(freq = freq, prediction_length = prediction_length, train_ds = train_ds, epochs = epochs, num_layers = num_layers, batch_size = batch_size)
+
+# Make the forecasts
 forecast_it, ts_it = make_evaluation_predictions(test_ds, predictor = predictor, num_eval_samples = 100)
+
+# Plot the prediction
 forecasts = list(forecast_it)
 tss = list(ts_it)
-plot_forecasts(tss, forecasts, past_length = 200, num_plots = 2, train_ds = train_ds)
+plot_forecasts(tss, forecasts, past_length = 100, num_plots = 2, train_ds = train_ds)
+
+
+'''
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from gluonts.dataset.repository.datasets import get_dataset, dataset_recipes
+from gluonts.dataset.util import to_pandas
+
+dataset = get_dataset("m4_hourly", regenerate=True)
+train_entry = next(iter(dataset.train))
+train_entry.keys()
+
+test_entry = next(iter(dataset.test))
+test_entry.keys()
+
+test_series = to_pandas(test_entry)
+train_series = to_pandas(train_entry)
+
+fig, ax = plt.subplots(2, 1, sharex=True, sharey=True, figsize=(10, 7))
+
+train_series.plot(ax=ax[0])
+ax[0].grid(which="both")
+ax[0].legend(["train series"], loc="upper left")
+
+test_series.plot(ax=ax[1])
+ax[1].axvline(train_series.index[-1], color='r') # end of train dataset
+ax[1].grid(which="both")
+ax[1].legend(["test series", "end of train series"], loc="upper left")
+
+plt.show()
+
+'''
+
 
 
 
