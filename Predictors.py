@@ -11,6 +11,11 @@ from itertools import islice
 from gluonts.model.prophet import ProphetPredictor
 from gluonts.model.gp_forecaster import GaussianProcessEstimator
 from gluonts.model.wavenet import WaveNetEstimator
+from gluonts.transform import AddAgeFeature
+from gluonts.transform import AddObservedValuesIndicator
+from gluonts.transform import FieldName
+
+
 
 list_products = ["CONF TONIQUE B400ML",
 "GENIFIQUE 13 SERUM B75ML",
@@ -158,28 +163,46 @@ list_products = ["CONF TONIQUE B400ML",
 #list_products = ["GENIFIQUE 13 SERUM B30ML", "REN FRENCH LIFT P50ML"]
 
 def train_test_set(min_date, max_date, prediction_length, freq):
-        Transactions_obj = TransactionsMonthlyGranular("LAN_before_demonstrations.csv")
+        # Load and process transactions data
+        Transactions_obj = TransactionsMonthlyGranular("Lanc_sub_sub.csv")
         data = Transactions_obj.Product_sales(list_products, "day", min_date,  max_date)
         ext_data = pd.read_csv("P:\\0. R&D\\6. SKU sales forecast\\1_Raw data\\Promo_data.csv")
         ext_data["OrderDate"] = pd.to_datetime(ext_data["OrderDate"])
         data = data.merge(ext_data, how = 'left', on = "OrderDate")
+        data["Constant_feat"] = 1
+
+        # Turning the dataset into a correct entry for the DeepAR algorithm        
+        [f"FieldName.{k} = '{v}'" for k, v in FieldName.__dict__.items() if not k.startswith('_')]
         train = data[:-prediction_length]
         test = data[-prediction_length:]
-        train_ds = ListDataset([{"start": train.OrderDate.index[0], "target": train.SalesQuantity}], freq = freq)
-        test_ds = ListDataset([{"start": data.OrderDate.index[-prediction_length], "target": data.SalesQuantity}], freq = freq)
+        #train_ds = ListDataset([{"start": train.OrderDate.index[0], "target": train.SalesQuantity}], freq = freq)
+        #test_ds = ListDataset([{"start": data.OrderDate.index[-prediction_length], "target": data.SalesQuantity}], freq = freq)
+        train_ds = ListDataset([{FieldName.TARGET: target, 
+                                FieldName.START: start,
+                                FieldName.FEAT_DYNAMIC_REAL: fdr,
+                                FieldName.FEAT_STATIC_CAT: fsc} 
+                                for (target, start, fdr, fsc) in zip(train.SalesQuantity, 
+                                                             train.OrderDate.index[0], 
+                                                             train[["GWP", "VS"]], 
+                                                             train.Constant_feat)],
+                                freq=freq)
+        
+        test_ds = ListDataset([{FieldName.TARGET: target, 
+                                FieldName.START: start,
+                                FieldName.FEAT_DYNAMIC_REAL: fdr,
+                                FieldName.FEAT_STATIC_CAT: fsc} 
+                                for (target, start, fdr, fsc) in zip(data.SalesQuantity, 
+                                                             data.OrderDate.index[-prediction_length], 
+                                                             data[["GWP", "VS"]], 
+                                                             data.Constant_feat)],
+                                freq=freq)
+
         return train_ds, test_ds
 
 
-# freq = "D"
-# prediction_length = 40
 def train_predictor(freq, prediction_length, train_ds, epochs, num_layers, batch_size):
         estimator = DeepAREstimator(freq=freq, prediction_length=prediction_length,
                                         trainer=Trainer(ctx="cpu", epochs=epochs, batch_size = batch_size, num_batches_per_epoch = 100), num_layers = num_layers)
-        #estimator = ProphetPredictor(freq = freq, prediction_length=prediction_length)
-        #estimator = GaussianProcessEstimator(freq = freq, prediction_length = prediction_length,
-        #                                        cardinality = 100, trainer=Trainer(epochs=150))
-        #estimator = WaveNetEstimator(freq = freq, prediction_length=prediction_length,
-        #                                trainer = Trainer(epochs = 200))
         predictor = estimator.train(training_data=train_ds)
         return predictor
 
