@@ -1,0 +1,8 @@
+
+'''
+dataset_alvin = pd.read_csv("C:\\Users\\jean.debeney\\OneDrive - Ekimetrics\\Documents\\Stock_forecast\\Alvin_rich_again_amended.csv")
+pred_length_alvin = 30
+train_alvin = dataset_alvin[:-pred_length_alvin]
+train_ds = ListDataset([{'start': train_alvin.Date.index[0], "target": train_alvin.Close}], freq = "D")
+test_ds = ListDataset([{'start': dataset_alvin.Date.index[-pred_length_alvin], "target": dataset_alvin.Close}], freq = "D")
+'''
