@@ -184,17 +184,6 @@ class TransactionsMonthlyGranular(Data):
         return self.data
 
 
-    def groupby_product_store(self, weekly = True):
-        print(">> Aggregating transacions at product and store level")
-        self.data = self.data.groupby(["ProductEnglishname", "OrderDate", "CounterLocalName"], as_index = False)["SalesQuantity"].sum()
-        if weekly:
-            print(">> Aggregating transactions by week")
-            self.to_datetime(force = True)
-            self.data = self.data.groupby(["ProductEnglishname", "CounterLocalName"], as_index = False).apply(lambda x:x.set_index("OrderDate").resample("W"))
-            self.data["ProductEnglishname"] = self.data["ProductEnglishname"].fillna(method = "ffill")
-        return self.data
-
-
     # ProductEnglishname is a list of product
     def Product_sales(self, ProductEnglishname, granularity, min_date, max_date):
         if type(ProductEnglishname) is not list:
