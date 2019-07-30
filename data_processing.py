@@ -139,7 +139,7 @@ class Data(object):
 
 class TransactionsMonthlyGranular(Data):
     def __init__(self, filename):
-        print(f">> Loading Monthly Transaction Data")
+        print(f">> Loading Transaction Data")
         self.data = self.read_from_transactions_folder(filename)
         self.data = self.data[["CustomerID", "OrderID", "OrderDate","SalesQuantity",
         "SalesAmount", "Axe", "ProductCategory", "ProductSubCategory",
@@ -202,7 +202,8 @@ class TransactionsMonthlyGranular(Data):
         self.groupby_product(granularity, min_date, max_date)
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
-        self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
+        if granularity == "day":
+            self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
         self.data["SalesQuantity"].fillna(0, inplace = True)
         self.create_temporal_features("OrderDate")
         self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
