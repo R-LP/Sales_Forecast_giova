@@ -6,9 +6,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 
-#-----------------------------------------------------------------------------------------
-# HELPER \\
-#-----------------------------------------------------------------------------------------
 
 TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
 #TRANSACTIONS_FOLDER = "C:/Users/jean.debeney/OneDrive - Ekimetrics/Documents/Projects/R&D/SKU_forecast/Raw_data"
