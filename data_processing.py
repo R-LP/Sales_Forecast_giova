@@ -51,9 +51,9 @@ class Data(object):
 
 
     @staticmethod
-    def save_to_processed_data_folder(filename):
+    def save_to_processed_data_folder(self, filename):
         path = os.path.join(DATA_FOLDER, filename)
-        data.to_csv(path, index = False)
+        self.data.to_csv(path, index = False)
         print("File saved at {}".format(path)) 
 
 

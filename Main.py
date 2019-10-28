@@ -7,7 +7,7 @@ prediction_length = 303
 freq = "D"
 
 # For neural network architecture
-epochs = 200
+epochs = 10
 num_layers = 3 
 batch_size = 64 
 
