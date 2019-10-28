@@ -1,6 +1,5 @@
 from data_processing import *
 import gluonts
-from gluonts.dataset.common import ListDataset
 from gluonts.model.deepar import DeepAREstimator
 from gluonts.trainer import Trainer
 from gluonts.evaluation import Evaluator
@@ -9,16 +8,6 @@ from gluonts.trainer import Trainer
 from itertools import islice
 from pathlib import Path
 from gluonts.model.predictor import Predictor
-from gluonts.transform import (
-    AddAgeFeature,
-    AddObservedValuesIndicator,
-    Chain,
-    FieldName,
-    #ExpectedNumInstanceSampler,
-    #FieldName,
-    #InstanceSplitter,
-    #SetFieldIfNotPresent,
-)
 
 
 
@@ -165,117 +154,80 @@ list_products = ["CONF TONIQUE B400ML",
 "CNY 18 GEN EYE CREAM & LP SET",
 ]
 
-#list_products = ["GENIFIQUE 13 SERUM B30ML", "REN FRENCH LIFT P50ML"]
 
-def create_transformation(freq, context_length, prediction_length):
-    return Chain(
-        [
-            AddObservedValuesIndicator(
-                target_field=FieldName.TARGET,
-                output_field=FieldName.OBSERVED_VALUES,
-            ),
-            AddAgeFeature(
-                target_field=FieldName.TARGET,
-                output_field=FieldName.FEAT_AGE,
-                pred_length=prediction_length,
-                log_scale=True,
-            ),
-        ]
-    )
+class Predictor_sales(object):
+    def __init__(self, freq = "D", prediction_length = 30, epochs = 50, batch_size = 16, num_batches_per_epoch = 100, num_layers = 4):
+        self.predictor = DeepAREstimator(
+            freq=freq,
+            prediction_length=prediction_length,
+            trainer=Trainer(ctx="cpu",
+                            epochs=epochs,
+                            batch_size = batch_size,
+                            num_batches_per_epoch = num_batches_per_epoch),
+            num_layers = num_layers)
 
 
-
-def train_test_set(prediction_length, freq, min_date, max_date):
-        Transactions_obj = TransactionsMonthlyGranular("LAN.csv")
-        data = Transactions_obj.Product_sales(list_products, "day", min_date,  max_date)
-        # Creating different fields for the training dataset
-        [f"FieldName.{k} = '{v}'" for k, v in FieldName.__dict__.items() if not k.startswith('_')]
-        train = data[:-prediction_length]
-        # Ability to add feat_static_cat (static categorical), feat_static_real (static real), feat_dynamic_cat, feat_dynamic_real (dyamic)
-        List_features = list(data.columns)
-        List_features.remove("OrderDate")
-        List_features.remove("SalesQuantity")
-        if freq == "M":
-            List_features.remove("Day")
-        min_date = pd.to_datetime(min_date, yearfirst= True)
-        max_date = pd.to_datetime(max_date, yearfirst = True)
-
-        # Drawing test and train sets
-        train_ds = ListDataset([{FieldName.TARGET: train.SalesQuantity, 
-                                FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
-                                FieldName.FEAT_DYNAMIC_REAL: train[List_features],
-                                }], 
-                                freq=freq)
-
-        test_ds = ListDataset([{FieldName.TARGET: data.SalesQuantity, 
-                        FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
-                        FieldName.FEAT_DYNAMIC_REAL: data[List_features],
-                        }], 
-                        freq=freq)
-
-        return train_ds, test_ds
+    def define_DeepAR_predictor(self, freq, prediction_length, train_ds, epochs, num_layers, batch_size):
+        self.predictor = DeepAREstimator(freq=freq, prediction_length=prediction_length,
+                                trainer=Trainer(ctx="cpu", epochs=epochs, batch_size = batch_size, num_batches_per_epoch = 100), num_layers = num_layers)
 
 
-def load_predictor():
-        predictor_deserialized = Predictor.deserialize(Path("P:/0. R&D/6. SKU sales forecast/4_Predictors/"))
-        return predictor_deserialized
+    def train_predictor(self, train_ds):
+        self.predictor = self.predictor.train(training_data=train_ds)
+        return self.predictor
 
 
-def save_predictor(predictor):
-    predictor.serialize(Path("P:/0. R&D/6. SKU sales forecast/4_Predictors/"))
+    def make_predictions(self, test_ds):
+        forecast_it, ts_it = make_evaluation_predictions(test_ds, predictor = self.predictor, num_eval_samples = 100)
+        return forecast_it, ts_it
 
 
-def train_predictor(freq, prediction_length, train_ds, epochs, num_layers, batch_size):
-        estimator = DeepAREstimator(freq=freq, prediction_length=prediction_length,
-                                        trainer=Trainer(ctx="cpu", epochs=epochs, batch_size = batch_size, num_batches_per_epoch = 100), num_layers = num_layers)
-        predictor = estimator.train(training_data=train_ds)
-        return predictor
+    def plot_prob_forecasts(self, test_ds):
+        forecast_plot, ts_plot = make_evaluation_predictions(dataset = test_ds, predictor = self.predictor, num_eval_samples = 100)
+        tss = list(ts_plot)
+        forecasts = list(forecast_plot)
+        ts_entry = tss[0]
+        forecast_entry = forecasts[0]
+        plot_length = 150 
+        prediction_intervals = (50.0, 90.0)
+        legend = ["observations", "median prediction"] + [f"{k}% prediction interval" for k in prediction_intervals][::-1]
+        fig, ax = plt.subplots(1, 1, figsize=(10, 7))
+        ts_entry[-plot_length:].plot(ax=ax)  # plot the time series
+        forecast_entry.plot(prediction_intervals=prediction_intervals, color='g')
+        plt.grid(which="both")
+        plt.legend(legend, loc="upper left")
+        plt.show()
 
 
-def plot_forecasts(tss, forecasts, past_length, num_plots, train_ds):
-        evaluator = Evaluator(quantiles=[0.5], seasonality=2019)
-        agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(train_ds))
-        print(agg_metrics)
-        for target, forecast in islice(zip(tss, forecasts), num_plots):
-                ax = target[-past_length:].plot(figsize = (12,5), linewidth=2)
-                forecast.plot(color = 'g')
-                plt.grid(which = 'both')
-                plt.legend(["observations", "median prediction", 
-                    "90% confidence interval", "50% confidence interval"])
-                plt.show()
+    def save_csv(self, name, forecast_csv, ts_csv):
+        ts_csv = list(ts_csv)
+        forecast_csv = list(forecast_csv)
+        ts_csv = ts_csv[0]
+        forecast_csv = forecast_csv[0]
+        forecast_csv = pd.DataFrame(forecast_csv.mean)
+        ts_csv = pd.DataFrame(ts_csv)
+        forecast_name = "forecast " + name + ".csv"
+        ts_name = "ts " + name + ".csv"
+        forecast_csv.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name))
+        ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name))
 
 
 
-# def train_test_set(min_date, max_date, prediction_length, freq):
-#         # Load and process transactions data
-#         Transactions_obj = TransactionsMonthlyGranular("LAN.csv")
-#         data = Transactions_obj.Product_sales(list_products, "day", min_date,  max_date)
-#         ext_data = pd.read_csv("P:\\0. R&D\\6. SKU sales forecast\\1_Raw data\\Promo_data.csv")
-#         # Reading external data
-#         ext_data["OrderDate"] = pd.to_datetime(ext_data["OrderDate"])
-#         data = data.merge(ext_data, how = 'left', on = "OrderDate")
-#         # Creating different fields for the training dataset
-#         [f"FieldName.{k} = '{v}'" for k, v in FieldName.__dict__.items() if not k.startswith('_')]
-#         train = data[:-prediction_length]
-#         print(train)
-#         '''
-#         feat_static_cat: static (over time) categorical features, list with dimension equal to the number of features
-#         feat_static_real: static (over time) real features, list with dimension equal to the number of features
-#         feat_dynamic_cat: dynamic (over time) categorical features, array with shape equal to (target length, number of features)
-#         feat_dynamic_real: dynamic (over time) real features, array with shape equal to (target length, number of features)
-#         '''
-#         train_ds = ListDataset([{FieldName.TARGET: train.SalesQuantity, 
-#                                 FieldName.START: train.OrderDate.index[0],
-#                                 FieldName.FEAT_DYNAMIC_REAL: train[["month", "dayofweek", "day", "week"]],
-#                                 }], 
-#                                 freq=freq)
+    # For theDeepAR Estimator
+    def create_transformation(self, freq, context_length, prediction_length):
+        return Chain(
+            [
+                AddObservedValuesIndicator(
+                    target_field=FieldName.TARGET,
+                    output_field=FieldName.OBSERVED_VALUES,
+                ),
+                AddAgeFeature(
+                    target_field=FieldName.TARGET,
+                    output_field=FieldName.FEAT_AGE,
+                    pred_length=prediction_length,
+                    log_scale=True,
+                ),
+            ]
+        )
 
-#         test_ds = ListDataset([{FieldName.TARGET: data.SalesQuantity, 
-#                         FieldName.START: data.OrderDate.index[0],
-#                         FieldName.FEAT_DYNAMIC_REAL: data[["month", "dayofweek", "day", "week"]],
-#                         }], 
-#                         freq=freq)
-#         transformation = create_transformation(freq = freq, context_length = len(data.OrderDate) - prediction_length,  prediction_length = prediction_length)
-#         #train_tf = transformation(iter(train_ds), is_train = True)
-#         #test_tf = transformation(iter(test_ds), is_train = False)
-#         return train_ds, test_ds
+

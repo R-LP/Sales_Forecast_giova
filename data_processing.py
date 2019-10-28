@@ -2,15 +2,26 @@ import pandas as pd
 import numpy as np
 import os
 import missingno
+from gluonts.dataset.common import ListDataset
 import matplotlib.pyplot as plt
 from datetime import datetime
+from gluonts.transform import (
+    AddAgeFeature,
+    AddObservedValuesIndicator,
+    Chain,
+    FieldName,
+    #ExpectedNumInstanceSampler,
+    #FieldName,
+    #InstanceSplitter,
+    #SetFieldIfNotPresent,
+)
 
 
 
 TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
 #TRANSACTIONS_FOLDER = "C:/Users/jean.debeney/OneDrive - Ekimetrics/Documents/Projects/R&D/SKU_forecast/Raw_data"
 #TRANSACTIONS_FOLDER = 'C:/Users/jean.debeney/Documents/RD/SKU_forecast/LAN/Data'
-DATA_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/2_Processed_Data"
+OUTPUT_FOLDER = "P:/0. R&D/6. SKU sales forecast/5_output"
 
 
 
@@ -134,7 +145,7 @@ class Data(object):
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(keys)]
 
 
-class TransactionsMonthlyGranular(Data):
+class TransactionsData(Data):
     def __init__(self, filename):
         print(f">> Loading Transaction Data")
         self.data = self.read_from_transactions_folder(filename)
@@ -149,14 +160,14 @@ class TransactionsMonthlyGranular(Data):
 
     # Groupby ProductEnglishName with different granularities and return a column with correct date format
     def groupby_product(self, granularity, min_date, max_date):
-        if granularity == "day":
+        if (granularity == "day") or (granularity == "D"):
             print(f">> Aggregating transactions at productenglishname level and daily granularity")
             self.data = self.data.groupby(["ProductEnglishname", "year", "month", "day"],
                                             as_index = False)["SalesQuantity"].sum()
             self.period_list = self.get_period_list(min_date, max_date, freq = 'D')
             self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
 
-        if granularity == "week":
+        if (granularity == "week") or (granularity == "W"):
             print(f">> Aggregating transactions at productenglishname level and weekly granularity")
             self.data = self.data \
                 .groupby("ProductEnglishname", as_index = False) \
@@ -166,7 +177,7 @@ class TransactionsMonthlyGranular(Data):
             self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
             self.period_list = self.get_period_list(min_date, max_date, freq = 'W')
 
-        if granularity == "month":
+        if (granularity == "month") or (granularity == "M"):
             print(f">> Aggregating transactions at productenglishname level and monthly granularity")
             self.data = self.data \
                 .groupby("ProductEnglishname", as_index = False) \
@@ -188,41 +199,39 @@ class TransactionsMonthlyGranular(Data):
         self.groupby_product(granularity, min_date, max_date)
         self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
-        if granularity == "day":
+        if (granularity == "day") or (granularity == "D"):
             self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
         self.data["SalesQuantity"].fillna(0, inplace = True)
         self.create_temporal_features("OrderDate")
         self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
         return self.data
 
-    
 
+    def train_test_set(self, list_products, prediction_length, freq, min_date, max_date):
+        self.data_final = self.Product_sales(ProductEnglishname = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
+        # Creating different fields for the training dataset
+        [f"FieldName.{k} = '{v}'" for k, v in FieldName.__dict__.items() if not k.startswith('_')]
+        train = self.data_final[:-prediction_length]
+        # Ability to add feat_static_cat (static categorical), feat_static_real (static real), feat_dynamic_cat, feat_dynamic_real (dyamic)
+        List_features = list(self.data_final.columns)
+        List_features.remove("OrderDate")
+        List_features.remove("SalesQuantity")
+        if freq == "M":
+            List_features.remove("Day")
+        min_date = pd.to_datetime(min_date, yearfirst= True)
+        max_date = pd.to_datetime(max_date, yearfirst = True)
 
+        # Drawing test and train sets
+        self.train_ds = ListDataset([{FieldName.TARGET: train.SalesQuantity, 
+                                FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
+                                FieldName.FEAT_DYNAMIC_REAL: train[List_features],
+                                }], 
+                                freq=freq)
 
+        self.test_ds = ListDataset([{FieldName.TARGET: self.data_final.SalesQuantity, 
+                        FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
+                        FieldName.FEAT_DYNAMIC_REAL: self.data_final[List_features],
+                        }], 
+                        freq=freq)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return self.train_ds, self.test_ds
