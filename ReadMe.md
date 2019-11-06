@@ -1,1 +1,1 @@
-Sales Forecast at the SKU level
+Sales Forecast at the product level
