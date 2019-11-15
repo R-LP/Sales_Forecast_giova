@@ -1,3 +1,5 @@
+from parameters import *
+
 import pandas as pd
 import numpy as np
 import os
@@ -17,11 +19,13 @@ from gluonts.transform import (
 )
 
 
-
-TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
+#TRANSACTIONS_FOLDER = "C:/Users/anthony.chan/Ekimetrics/Eki HK - 6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
+#TRANSACTIONS_FOLDER = "P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
 #TRANSACTIONS_FOLDER = "C:/Users/jean.debeney/OneDrive - Ekimetrics/Documents/Projects/R&D/SKU_forecast/Raw_data"
 #TRANSACTIONS_FOLDER = 'C:/Users/jean.debeney/Documents/RD/SKU_forecast/LAN/Data'
-OUTPUT_FOLDER = "P:/0. R&D/6. SKU sales forecast/5_output"
+
+#OUTPUT_FOLDER = "C:/Users/anthony.chan/Ekimetrics/Eki HK - 6. SKU sales forecast/5_output"
+#OUTPUT_FOLDER = "P:/0. R&D/6. SKU sales forecast/5_output"
 
 
 

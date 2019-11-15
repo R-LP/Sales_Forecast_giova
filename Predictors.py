@@ -1,3 +1,5 @@
+from parameters import *
+
 from data_processing import *
 import gluonts
 from gluonts.model.deepar import DeepAREstimator
@@ -11,10 +13,10 @@ from gluonts.model.predictor import Predictor
 
 
 
-list_products = ["CONF TONIQUE B400ML",
-"GENIFIQUE 13 SERUM B75ML",
-"ADV GEN EYES LIGHT PEARLB20ML"
-]
+#list_products = ["CONF TONIQUE B400ML",
+#"GENIFIQUE 13 SERUM B75ML",
+#"ADV GEN EYES LIGHT PEARLB20ML"
+#]
 
 
 class Predictor_sales(object):
