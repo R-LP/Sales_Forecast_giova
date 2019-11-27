@@ -1,5 +1,4 @@
-from parameters import *
-
+from settings import *
 from data_processing import *
 import gluonts
 from gluonts.model.deepar import DeepAREstimator

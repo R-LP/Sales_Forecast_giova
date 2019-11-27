@@ -1,8 +1,8 @@
-from parameters import *
 import warnings
 warnings.filterwarnings("ignore")
 from Predictors import *
 from data_processing import *
+
 
 
 # Create the train and test sets out of the transaction data object

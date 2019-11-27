@@ -35,5 +35,7 @@ min_date = "2016-07-01"
 max_date = "2019-06-30"
 
 # Directories
-TRANSACTIONS_FOLDER = "C:/Users/anthony.chan/Ekimetrics/Eki HK - 6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
-OUTPUT_FOLDER = "C:/Users/anthony.chan/Ekimetrics/Eki HK - 6. SKU sales forecast/5_output"
+# TRANSACTIONS_FOLDER = "C:/Users/anthony.chan/Ekimetrics/Eki HK - 6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
+# OUTPUT_FOLDER = "C:/Users/anthony.chan/Ekimetrics/Eki HK - 6. SKU sales forecast/5_output"
+TRANSACTIONS_FOLDER="P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
+OUTPUT_FOLDER="P:/0. R&D/6. SKU sales forecast/5_output"
