@@ -9,8 +9,9 @@ from gluonts.trainer import Trainer
 from itertools import islice
 from pathlib import Path
 from gluonts.model.predictor import Predictor
-
-
+import datetime 
+from fbprophet import Prophet
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 #list_products = ["CONF TONIQUE B400ML",
 #"GENIFIQUE 13 SERUM B75ML",
@@ -33,6 +34,12 @@ class Predictor_sales(object):
     def define_DeepAR_predictor(self, freq, prediction_length, train_ds, epochs, num_layers, batch_size):
         self.predictor = DeepAREstimator(freq=freq, prediction_length=prediction_length,
                                 trainer=Trainer(ctx="cpu", epochs=epochs, batch_size = batch_size, num_batches_per_epoch = 100), num_layers = num_layers)
+
+
+    def define_Prophet_predictor(self, freq, prediction_length, mcmc_samples, changepoint_prior_scale, interval_width, seasonality_mode, weekly_seasonality, daily_seasonality):
+        self.predictor = Prophet(freq = freq, prediction_length=prediction_length, mcmc_samples = mcmc_samples, changepoint_prior_scale = changepoint_prior_scale, 
+                                                                                    interval_width = interval_width, seasonality_mode = seasonality_mode,
+                                                                                    weekly_seasonality = weekly_seasonality, daily_seasonality = daily_seasonality)
 
 
     def train_predictor(self, train_ds):
