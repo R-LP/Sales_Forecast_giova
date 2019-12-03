@@ -7,7 +7,7 @@ from data_processing import *
 
 # Create the train and test sets out of the transaction data object
 Transactions_obj = TransactionsData(data)
-train_ds, test_ds = Transactions_obj.train_test_set(list_products = list_products, prediction_length = prediction_length, min_date = min_date, max_date = max_date,
+train_ds, test_ds = Transactions_obj.train_test_set(list_list_products = list_list_products, prediction_length = prediction_length, min_date = min_date, max_date = max_date,
                                                         freq = freq)
 
 # We create a Predictor object and set it as a DeeAR estimator

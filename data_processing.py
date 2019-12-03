@@ -20,6 +20,9 @@ from gluonts.transform import (
 
 # The class data inherits from the class of the object intance
 class Data(object):
+    def __init__():
+        self.converted_date_cols = []
+
 
     # Return all paths to files in the transactions files folder
     @staticmethod
@@ -30,30 +33,11 @@ class Data(object):
 
 
     @staticmethod
-    def read_from_processed_data_folder(filename, folder = None):
-        if folder is None: 
-            folder = DATA_FOLDER
-        path = os.path.join(folder, filename)
-        print(f"... Read file at {path}")
-        if filename.endswith(".csv"):
-            return pd.read_csv(path)
-        else:
-            return pd.read_pickle(path)  
-
-
-    @staticmethod
     def read_from_transactions_folder(filename):
         if filename.endswith(".csv"):
             return pd.read_csv(os.path.join(TRANSACTIONS_FOLDER, filename))
         else:
             return pd.read_pickle(os.path.join(TRANSACTIONS_FOLDER, filename))
-
-
-    @staticmethod
-    def save_to_processed_data_folder(self, filename):
-        path = os.path.join(DATA_FOLDER, filename)
-        self.data.to_csv(path, index = False)
-        print("File saved at {}".format(path)) 
 
 
     def show_missing_values(self):
@@ -66,7 +50,7 @@ class Data(object):
 
     
     @staticmethod
-    def get_period_list(min_date = "2016-07-01", max_date = "2019-06-30", freq = 'W'):
+    def get_period_list(min_date = min_date, max_date = max_date, freq = 'W'):
         if freq is not 'W':
             daterange = pd.date_range(min_date, max_date,  freq = freq, tz = None).to_pydatetime()
             daterange = pd.DataFrame(daterange)
@@ -94,23 +78,13 @@ class Data(object):
                 print("Not in columns")
 
 
-    def create_temporal_features(self, column):
-        date_column = self.data[column]
-        self.data["year"] = date_column.map(lambda x : x.year)
-        self.data["month"] = date_column.map(lambda x : x.month)
-        self.data["week"] = date_column.map(lambda x : x.week)
-        self.data["day"] = date_column.map(lambda x : x.day)
-        self.data["dayofweek"] = date_column.map(lambda x : x.dayofweek)
-
-
-    def reload_from_file(self, name = None, folder = None):
-        if name is None: name  = self.name
-        self.data = self.read_from_processed_data_folder(name, folder)
-
-
-    def to_csv(self, name = None):
-        if name is None: name = self.name
-        self.data = self.save_to_processed_data_folder(name, name)
+    def create_temporal_features(self, df, column):
+        date_column = df[column]
+        df["year"] = date_column.map(lambda x : x.year)
+        df["month"] = date_column.map(lambda x : x.month)
+        df["week"] = date_column.map(lambda x : x.week)
+        df["day"] = date_column.map(lambda x : x.day)
+        df["dayofweek"] = date_column.map(lambda x : x.dayofweek)
 
 
     def get_shape(self):
@@ -141,7 +115,7 @@ class TransactionsData(Data):
         self.data["SalesAmount"] = self.data["SalesAmount"].map(float)
         self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
         self.to_datetime(force = True)
-        self.create_temporal_features("OrderDate")
+        self.create_temporal_features(self.data, "OrderDate")
 
 
     # Groupby ProductEnglishName with different granularities and return a column with correct date format
@@ -179,22 +153,28 @@ class TransactionsData(Data):
 
 
     # ProductEnglishname is a list of product
-    def Product_sales(self, list_products, granularity, min_date, max_date):
-        if type(list_products) is not list:
+    def Product_sales(self, list_list_products, granularity, min_date, max_date):
+        if type(list_list_products) is not list:
             print(f">> The product entered as an input should be a list of product")
         self.groupby_product(granularity, min_date, max_date)
-        self.data = self.data.loc[self.data["ProductEnglishname"].isin(list_products)]
-        self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
-        if (granularity == "day") or (granularity == "D"):
-            self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
-        self.data["SalesQuantity"].fillna(0, inplace = True)
-        self.create_temporal_features("OrderDate")
-        self.data["OrderDate"] = pd.to_datetime(self.data[["year", "month", "day"]])
-        return self.data
+        for i, list_products in enumerate(list_list_products):
+            _col_name = "list_" + str(i)
+            _data = self.data.loc[self.data["ProductEnglishname"].isin(list_products)]
+            _data = _data.rename(columns={'SalesQuantity' : _col_name}, inplace = False)
+            _data = _data.groupby(["OrderDate"], as_index = False)[_col_name].sum()
+            if (i == 0):
+                agg_data = self.period_list.merge(_data, how = 'left', on = "OrderDate")
+            else:
+                agg_data = agg_data.merge(_data, how = 'left', on = "OrderDate")
+            agg_data[_col_name].fillna(0, inplace = True)
+        self.create_temporal_features(agg_data, "OrderDate")
+        agg_data["OrderDate"] = pd.to_datetime(agg_data[["year", "month", "day"]])
+        print(agg_data)
+        return agg_data
 
 
-    def train_test_set(self, list_products, prediction_length, freq, min_date, max_date):
-        self.data_final = self.Product_sales(list_products = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
+    def train_test_set(self, list_list_products, prediction_length, freq, min_date, max_date):
+        self.data_final = self.Product_sales(list_list_products = list_list_products, granularity = freq, min_date = min_date,  max_date = max_date)
         # Creating different fields for the training dataset
         [f"FieldName.{k} = '{v}'" for k, v in FieldName.__dict__.items() if not k.startswith('_')]
         train = self.data_final[:-prediction_length]
@@ -211,7 +191,7 @@ class TransactionsData(Data):
         self.train_ds = ListDataset([{FieldName.TARGET: train.SalesQuantity, 
                                 FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
                                 FieldName.FEAT_DYNAMIC_REAL: train[List_features],
-                                }], 
+                                }],
                                 freq=freq)
 
         self.test_ds = ListDataset([{FieldName.TARGET: self.data_final.SalesQuantity, 
