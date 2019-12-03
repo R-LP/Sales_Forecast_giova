@@ -13,10 +13,6 @@ import datetime
 from fbprophet import Prophet
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-#list_products = ["CONF TONIQUE B400ML",
-#"GENIFIQUE 13 SERUM B75ML",
-#"ADV GEN EYES LIGHT PEARLB20ML"
-#]
 
 
 class Predictor_sales(object):
@@ -32,7 +28,7 @@ class Predictor_sales(object):
 
 
     def define_DeepAR_predictor(self, freq, prediction_length, train_ds, epochs, num_layers, batch_size):
-        self.predictor = DeepAREstimator(freq=freq, prediction_length=prediction_length,
+        self.predictor = DeepAREstimator(freq=freq, prediction_length=prediction_length, context_length = prediction_length,
                                 trainer=Trainer(ctx="cpu", epochs=epochs, batch_size = batch_size, num_batches_per_epoch = 100), num_layers = num_layers)
 
 
@@ -56,14 +52,15 @@ class Predictor_sales(object):
         forecast_plot, ts_plot = make_evaluation_predictions(dataset = test_ds, predictor = self.predictor, num_eval_samples = 100)
         tss = list(ts_plot)
         forecasts = list(forecast_plot)
-        ts_entry = tss[0]
+        ts_entry = tss[0] # we plot only the first time serie to forecast
         forecast_entry = forecasts[0]
-        plot_length = 150 
+        plot_length = 70 
         prediction_intervals = (50.0, 90.0)
         legend = ["observations", "median prediction"] + [f"{k}% prediction interval" for k in prediction_intervals][::-1]
-        fig, ax = plt.subplots(1, 1, figsize=(10, 7))
+        _, ax = plt.subplots(1, 1, figsize=(10, 7))
+        pd.plotting.register_matplotlib_converters()
         ts_entry[-plot_length:].plot(ax=ax)  # plot the time series
-        forecast_entry.plot(prediction_intervals=prediction_intervals, color='g')
+        forecast_entry.plot(prediction_intervals=prediction_intervals, color='b')
         plt.grid(which="both")
         plt.legend(legend, loc="upper left")
         plt.show()
@@ -72,7 +69,7 @@ class Predictor_sales(object):
     def save_csv(self, name, forecast_csv, ts_csv):
         ts_csv = list(ts_csv)
         forecast_csv = list(forecast_csv)
-        ts_csv = ts_csv[0]
+        ts_csv = ts_csv[0] # we output only the first time serie to forecast
         forecast_csv = forecast_csv[0]
         forecast_csv = pd.DataFrame(forecast_csv.mean)
         ts_csv = pd.DataFrame(ts_csv)
@@ -83,7 +80,7 @@ class Predictor_sales(object):
 
 
 
-    # For theDeepAR Estimator
+    # For theDeepAR Estimator - not in use so far
     def create_transformation(self, freq, context_length, prediction_length):
         return Chain(
             [

@@ -176,26 +176,43 @@ class TransactionsData(Data):
         # Creating different fields for the training dataset
         [f"FieldName.{k} = '{v}'" for k, v in FieldName.__dict__.items() if not k.startswith('_')]
         train = self.data_final[:-prediction_length]
-        # Ability to add feat_static_cat (static categorical), feat_static_real (static real), feat_dynamic_cat, feat_dynamic_real (dyamic)
+        # In List_features we add the columns with feat_static_cat (static categorical), feat_static_real (static real), feat_dynamic_cat, feat_dynamic_real (dyamic)
         List_features = list(self.data_final.columns)
         List_features.remove("OrderDate")
-        List_features.remove("SalesQuantity")
-        if freq == "M":
+        List_product_iterate = ["list_"+str(i+1) for i in range(len(list_list_products))]
+        for feature_col in List_features:
+                if "list" in feature_col:
+                    List_features.remove(feature_col)
+        if ((freq == "M") or (freq == "Month") or (freq == "W") or freq == "Week"):
             List_features.remove("Day")
         min_date = pd.to_datetime(min_date, yearfirst= True)
         max_date = pd.to_datetime(max_date, yearfirst = True)
+        print(train)
+
+        # # Drawing test and train sets
+        # self.train_ds = ListDataset([{FieldName.TARGET: train.list_1, 
+        #                         FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
+        #                         FieldName.FEAT_DYNAMIC_REAL: train[List_features],
+        #                         }],
+        #                         freq=freq)
+
+        # self.test_ds = ListDataset([{FieldName.TARGET: self.data_final.list_1, 
+        #                 FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
+        #                 FieldName.FEAT_DYNAMIC_REAL: self.data_final[List_features],
+        #                 }], 
+        #                 freq=freq)
 
         # Drawing test and train sets
-        self.train_ds = ListDataset([{FieldName.TARGET: train.SalesQuantity, 
+        self.train_ds = ListDataset([{FieldName.TARGET: train[list_product], 
                                 FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
                                 FieldName.FEAT_DYNAMIC_REAL: train[List_features],
-                                }],
+                                } for list_product in List_product_iterate],
                                 freq=freq)
 
-        self.test_ds = ListDataset([{FieldName.TARGET: self.data_final.SalesQuantity, 
+        self.test_ds = ListDataset([{FieldName.TARGET: self.data_final[list_product], 
                         FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
                         FieldName.FEAT_DYNAMIC_REAL: self.data_final[List_features],
-                        }], 
+                        } for list_product in List_product_iterate], 
                         freq=freq)
 
         return self.train_ds, self.test_ds

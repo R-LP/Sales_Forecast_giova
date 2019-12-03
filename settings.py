@@ -15,9 +15,9 @@ data="LAN.csv"
 algorithm = "DeepAR"
 
 # DeepAR hyperparameters
-epochs=35
-num_layers=5
-batch_size=50
+epochs=5
+num_layers=2
+batch_size=32
 
 # Prophet hyperparameters
 mcmc_samples=300
@@ -30,7 +30,7 @@ regressor_list = []
 
 
 # prediction frame
-prediction_length=60
+prediction_length=10
 freq="D"
 min_date="2016-07-01"
 max_date="2019-06-30"
