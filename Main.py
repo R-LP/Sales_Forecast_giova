@@ -12,7 +12,9 @@ train_ds, test_ds = Transactions_obj.train_test_set(list_list_products = list_li
 
 # We create a Predictor object and set it as a DeeAR estimator
 Predictor_instance = Predictor_sales()
-Predictor_instance.define_DeepAR_predictor(freq = freq, prediction_length = prediction_length, train_ds = train_ds, epochs=epochs, num_layers = num_layers, batch_size = batch_size)
+#Predictor_instance.define_DeepAR_predictor(freq = freq, prediction_length = prediction_length, epochs=epochs, num_layers = num_layers, batch_size = batch_size)
+Predictor_instance.define_Prophet_predictor(freq = freq, prediction_length = prediction_length, prophet_params = prophet_params)
+
 # We train the predictor object
 Predictor_instance.train_predictor(train_ds = train_ds)
 

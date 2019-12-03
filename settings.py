@@ -27,6 +27,9 @@ seasonality_mode='multiplicative'
 weekly_seasonality=True
 daily_seasonality=True
 regressor_list = []
+prophet_params = {'mcmc_samples' : mcmc_samples, 'changepoint_prior_scale' : changepoint_prior_scale, 'interval_width' : interval_width, 'seasonality_mode' : seasonality_mode,
+                        'weekly_seasonality' : weekly_seasonality, 'daily_seasonality' : daily_seasonality}
+
 
 
 # prediction frame
