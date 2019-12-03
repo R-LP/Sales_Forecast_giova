@@ -137,9 +137,7 @@ class TransactionsData(Data):
     def __init__(self, filename):
         print(f">> Loading Transaction Data")
         self.data = self.read_from_transactions_folder(filename)
-        self.data = self.data[["CustomerID", "OrderID", "OrderDate","SalesQuantity",
-        "SalesAmount", "Axe", "ProductCategory", "ProductSubCategory",
-        "ProductLine", "ProductSubLine", "ProductEnglishname", "CounterLocalName"]]
+        self.data = self.data[["OrderDate","ProductEnglishname", "SalesQuantity", "SalesAmount"]]
         self.data["SalesAmount"] = self.data["SalesAmount"].map(float)
         self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
         self.to_datetime(force = True)
@@ -181,11 +179,11 @@ class TransactionsData(Data):
 
 
     # ProductEnglishname is a list of product
-    def Product_sales(self, ProductEnglishname, granularity, min_date, max_date):
-        if type(ProductEnglishname) is not list:
+    def Product_sales(self, list_products, granularity, min_date, max_date):
+        if type(list_products) is not list:
             print(f">> The product entered as an input should be a list of product")
         self.groupby_product(granularity, min_date, max_date)
-        self.data = self.data.loc[self.data["ProductEnglishname"].isin(ProductEnglishname)]
+        self.data = self.data.loc[self.data["ProductEnglishname"].isin(list_products)]
         self.data = self.data.groupby(["OrderDate"], as_index = False)["SalesQuantity"].sum()
         if (granularity == "day") or (granularity == "D"):
             self.data = self.period_list.merge(self.data, how = 'left', on = "OrderDate")
@@ -196,7 +194,7 @@ class TransactionsData(Data):
 
 
     def train_test_set(self, list_products, prediction_length, freq, min_date, max_date):
-        self.data_final = self.Product_sales(ProductEnglishname = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
+        self.data_final = self.Product_sales(list_products = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
         # Creating different fields for the training dataset
         [f"FieldName.{k} = '{v}'" for k, v in FieldName.__dict__.items() if not k.startswith('_')]
         train = self.data_final[:-prediction_length]
