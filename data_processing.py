@@ -20,9 +20,6 @@ from gluonts.transform import (
 
 # The class data inherits from the class of the object intance
 class Data(object):
-    def __init__():
-        self.converted_date_cols = []
-
 
     # Return all paths to files in the transactions files folder
     @staticmethod
@@ -50,20 +47,21 @@ class Data(object):
 
     
     @staticmethod
-    def get_period_list(min_date = min_date, max_date = max_date, freq = 'W'):
+    def get_period_list(min_date = min_date, max_date = max_date, freq = freq):
         if freq is not 'W':
-            daterange = pd.date_range(min_date, max_date,  freq = freq, tz = None).to_pydatetime()
+            daterange = pd.date_range(min_date, max_date,  freq = freq, tz = None)
             daterange = pd.DataFrame(daterange)
             daterange.columns = ["OrderDate"]
             return daterange
         else:
-            daterange = pd.date_range(min_date, max_date,  freq = 'W', tz = None).to_pydatetime()
+            daterange = pd.date_range(min_date, max_date,  freq = freq, tz = None)
             daterange = pd.DataFrame(daterange)
             daterange.columns = ["OrderDate"]
             return daterange
 
 
     def to_datetime(self, force = False):
+        self.converted_date_cols = []
         cols = ["OrderDate"]
         for col in cols:
             if col in self.data.columns:
@@ -158,7 +156,7 @@ class TransactionsData(Data):
             print(f">> The product entered as an input should be a list of product")
         self.groupby_product(granularity, min_date, max_date)
         for i, list_products in enumerate(list_list_products):
-            _col_name = "list_" + str(i)
+            _col_name = "list_" + str((i+1))
             _data = self.data.loc[self.data["ProductEnglishname"].isin(list_products)]
             _data = _data.rename(columns={'SalesQuantity' : _col_name}, inplace = False)
             _data = _data.groupby(["OrderDate"], as_index = False)[_col_name].sum()
