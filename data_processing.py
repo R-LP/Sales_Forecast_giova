@@ -187,21 +187,8 @@ class TransactionsData(Data):
             List_features.remove("Day")
         min_date = pd.to_datetime(min_date, yearfirst= True)
         max_date = pd.to_datetime(max_date, yearfirst = True)
-        print(train)
-
-        # # Drawing test and train sets
-        # self.train_ds = ListDataset([{FieldName.TARGET: train.list_1, 
-        #                         FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
-        #                         FieldName.FEAT_DYNAMIC_REAL: train[List_features],
-        #                         }],
-        #                         freq=freq)
-
-        # self.test_ds = ListDataset([{FieldName.TARGET: self.data_final.list_1, 
-        #                 FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
-        #                 FieldName.FEAT_DYNAMIC_REAL: self.data_final[List_features],
-        #                 }], 
-        #                 freq=freq)
-
+        
+        
         # Drawing test and train sets
         self.train_ds = ListDataset([{FieldName.TARGET: train[list_product], 
                                 FieldName.START: pd.Timestamp(min_date, freq = freq, unit = freq),
