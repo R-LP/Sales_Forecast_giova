@@ -1,15 +1,23 @@
+## gluonts.__version__ = '0.4.2'
+## fbprophet.__version__ = '0.5' Embedded inside GluonTs
+
 # Settings
 from dotenv import load_dotenv
 import os
-load_dotenv()
+import json
+load_dotenv(os.path.join(os.getcwd(), "forecast_env.env"))
 OUTPUT_FOLDER = os.getenv("OUTPUT_FOLDER")
 TRANSACTIONS_FOLDER = os.getenv("TRANSACTIONS_FOLDER")
-list_products=os.getenv("list_products")
+PROMO_DATA_FOLDER = os.getenv("PROMO_DATA_FOLDER")
+list_products=json.loads(os.getenv("list_products"))
 
 
 # data file
-data="LAN.csv"
+data="Lanc_sub_sub.csv"
 
+# promo data file
+promo_data="Promo_data.csv"
+#promo_data=None
 
 # Setting the name of the algorithm - choices ar: Arima, DeepAR or Prophet
 algorithm = "DeepAR"
@@ -20,7 +28,7 @@ num_layers=2
 batch_size=32
 
 # Prophet hyperparameters
-mcmc_samples=300
+mcmc_samples=10 #300
 changepoint_prior_scale=0.01
 interval_width=0.9
 seasonality_mode='multiplicative'
@@ -37,7 +45,3 @@ prediction_length=10
 freq="D"
 min_date="2016-07-01"
 max_date="2019-06-30"
-
-TRANSACTIONS_FOLDER="P:/0. R&D/6. SKU sales forecast/1_Raw data/1_LAN_AAD_data"
-OUTPUT_FOLDER="P:/0. R&D/6. SKU sales forecast/5_output"
-list_list_products = [["CONF TONIQUE B400ML","GENIFIQUE 13 SERUM B75ML"],["ADV GEN EYES LIGHT PEARLB20ML"]]
