@@ -5,6 +5,8 @@ import os
 import missingno
 from gluonts.dataset.common import ListDataset
 import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_style('whitegrid')
 from datetime import datetime
 from gluonts.transform import (
     AddAgeFeature,
@@ -26,12 +28,14 @@ class Data(object):
         files = [os.path.join(TRANSACTIONS_FOLDER, file) for file in files]
         return files
     
+
     @staticmethod
     def read_from_transactions_folder(filename):
         if filename.endswith(".csv"):
             return pd.read_csv(os.path.join(TRANSACTIONS_FOLDER, filename))
         else:
             return pd.read_pickle(os.path.join(TRANSACTIONS_FOLDER, filename))
+
 
     @staticmethod
     def read_from_promo_folder(filename_promo):
@@ -42,13 +46,15 @@ class Data(object):
                 return pd.read_pickle(os.path.join(PROMO_DATA_FOLDER, filename_promo))
 
 
+    def proper_input_col_names(self, csv_file, input_cols_mapping):
+        input_colnames = list(csv_file.columns)
+        if ('OrderDate' not in input_colnames)|('ProductEnglishname' not in input_colnames)|('SalesQuantity' not in input_colnames):
+            return csv_file.rename(columns=input_cols_mapping)
+
+
     def show_missing_values(self):
         missingno.matrix(self.data)
         plt.show()
-
-
-    def convert_column_to_datetime(self, col):
-        self.data[col] = pd.to_datetime(self.data[col])
 
     
     @staticmethod
@@ -77,30 +83,23 @@ class Data(object):
     def get_len(self):
         return len(self.data)
 
-
     def get_columns(self):
         return self.data.columns
-    
 
-    # keys input is a list
-    def filter_on_products(self, keys):
-        print(f">> Filtering on given list of products")
-        if not isinstance(keys, list):
-            keys =list(keys.data["ProductEnglishname"])
-        self.data = self.data.loc[self.data["ProductEnglishname"].isin(keys)]
 
 
 class TransactionsData(Data):
+
     def __init__(self, filename, filename_promo):
         print(f">> Loading Transaction Data")
         self.data = self.read_from_transactions_folder(filename)
-        self.data = self.data[["OrderDate","ProductEnglishname", "SalesQuantity", "SalesAmount"]]
-        self.data["SalesAmount"] = self.data["SalesAmount"].map(float)
+        self.data = self.proper_input_col_names(self.data, input_cols_mapping)
+        self.data = self.data[["OrderDate","ProductEnglishname", "SalesQuantity"]]
         self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
         self.promo_data = self.read_from_promo_folder(filename_promo)
+        self.algorithm = algorithm
 
-
-    # ProductEnglishname is a list of product
+    ## Aggregate at the required time granularity and grouping by specified products
     def Product_sales(self, list_products, granularity, min_date, max_date):
         self.period_list = self.get_period_list(min_date, max_date, freq = granularity)
         self.data["SalesQuantity"][self.data["SalesQuantity"] < 0] = 0
@@ -114,7 +113,6 @@ class TransactionsData(Data):
             _data = _data.rename(columns={'SalesQuantity' : _col_name}, inplace = False)
             _data.set_index(pd.DatetimeIndex(_data['OrderDate']), inplace=True)
             _data = _data.drop(columns=['OrderDate'])
-            _data = _data.drop(columns=['SalesAmount'])
             _data = _data.resample(granularity).sum().reset_index()
             _data['OrderDate'] = pd.to_datetime(_data['OrderDate'], format='%Y-%m-%d', errors='ignore')
             if (i == 0):
@@ -128,7 +126,7 @@ class TransactionsData(Data):
         #print(agg_data.tail(5))
         return agg_data
 
-
+    ## Aggregate the promo data at the required time granularity
     def agg_promo_data(self, granularity, min_date, max_date):
         self.period_list = self.get_period_list(min_date, max_date, freq = granularity)
         self.promo_data['OrderDate'] = pd.to_datetime(self.promo_data['OrderDate'], format='%Y-%m-%d', errors='ignore')
@@ -141,19 +139,30 @@ class TransactionsData(Data):
         #print(agg_promo_data.tail(5))
         return agg_promo_data
 
-
-    def train_test_set(self, list_products, prediction_length, freq, min_date, max_date):
-        self.data_final = self.Product_sales(list_products = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
-        if self.promo_data is not None:
-            self.data_final = self.data_final.merge(self.agg_promo_data(granularity=freq, min_date=min_date, max_date = max_date), how = 'left', on = "OrderDate")
-        # Creating different fields for the training dataset
-        train = self.data_final[:-prediction_length]
-        # In List_features we add the columns with feat_static_cat (static categorical), feat_static_real (static real), feat_dynamic_cat, feat_dynamic_real (dyamic)
-        self.List_features = list(self.data_final.columns)
+    ## Slits the data in training and evaluation sets - "train_test" for model performance evaluation and "total_future" to train on the entire data and predict the future
+    def train_predict_sets(self, type_split, list_products, prediction_length, freq, min_date, max_date, add_promo_data=False):
+        if type_split=='train_test':
+            self.data_predict = self.Product_sales(list_products = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
+            if self.promo_data is not None:
+                self.data_predict = self.data_predict.merge(self.agg_promo_data(granularity=freq, min_date=min_date, max_date = max_date), how = 'left', on = "OrderDate")
+        elif type_split=='total_future':
+            future_date = (pd.to_datetime(max_date) + pd.Timedelta(value=prediction_length, unit=freq)).strftime('%Y-%m-%d')
+            self.data_predict = self.Product_sales(list_products = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
+            if self.promo_data is not None:
+                self.data_predict = self.data_predict.merge(self.agg_promo_data(granularity=freq, min_date=min_date, max_date = max_date), how = 'left', on = "OrderDate")
+            self.period_list_future = self.get_period_list(min_date, future_date, freq = freq)
+            self.data_predict = self.period_list_future.merge(self.data_predict, how = 'left', on = "OrderDate")
+            self.data_predict = self.create_temporal_features(self.data_predict, "OrderDate")
+        
+        # Creating the training set as a truncation of the prediction set
+        data_train = self.data_predict[:-prediction_length]
+        # Gluonts separates 'target' from 'feat_dynamic_real' to incorporate it as external additional data
+        # Thus, 'target' are List_features columns and 'feat_dynamic_real' are the remaining columns
+        self.List_features = list(self.data_predict.columns)
         self.List_features.remove("OrderDate")
         self.List_product_no = ["list_"+str(i+1) for i in range(len(list_products))]
-
-        self.List_features = list(set(self.List_features)-set(['list_1', 'list_2', 'list_3']))
+        
+        self.List_features = list(set(self.List_features)-set(self.List_product_no)) # Ensemble difference computation
 
         if ((freq == "M") or (freq == "Month") or (freq == "W") or freq == "Week"):
             self.List_features.remove("day")
@@ -161,90 +170,28 @@ class TransactionsData(Data):
         max_date = pd.to_datetime(max_date, yearfirst = True)
         
         
-        # Drawing test and train sets
-        if algorithm=='DeepAR':
-            self.train_ds = ListDataset([{'target': train[list_product].values, 
+        # Drawing train and eval sets depending on the algo, as only DeepAR can incorporate additional external data correctly
+        if self.algorithm=='DeepAR':
+            self.train_final_ds = ListDataset([{'target': data_train[list_product].values, 
                                           'start': pd.Timestamp(min_date, freq=freq),
-                                          'feat_dynamic_real': train[self.List_features]}
-                                         for list_product in self.List_product_no],
-                                        freq=freq,
-                                        one_dim_target = False)
-            for p in range(len(self.List_product_no)):
-                self.train_ds.list_data[p]['target'] = self.train_ds.list_data[p]['target'][0]
-
-            self.test_ds = ListDataset([{'target': self.data_final[list_product].values, 
-                                          'start': pd.Timestamp(min_date, freq=freq),
-                                          'feat_dynamic_real': self.data_final[self.List_features]}
-                                         for list_product in self.List_product_no],
-                                        freq=freq,
-                                        one_dim_target = False)
-            for p in range(len(self.List_product_no)):
-                self.test_ds.list_data[p]['target'] = self.test_ds.list_data[p]['target'][0]
-
-        elif algorithm=='Prophet':
-            self.train_ds = ListDataset([{'target': train[list_product].values, 
-                                          'start': pd.Timestamp(min_date, freq=freq)}
-                                         for list_product in self.List_product_no],
-                                        freq=freq,
-                                        one_dim_target = False)
-            for p in range(len(self.List_product_no)):
-                self.train_ds.list_data[p]['target'] = self.train_ds.list_data[p]['target'][0]
-
-            self.test_ds = ListDataset([{'target': self.data_final[list_product].values, 
-                                          'start': pd.Timestamp(min_date, freq=freq)}
-                                         for list_product in self.List_product_no],
-                                        freq=freq,
-                                        one_dim_target = False)
-            for p in range(len(self.List_product_no)):
-                self.test_ds.list_data[p]['target'] = self.test_ds.list_data[p]['target'][0]
-        return self.train_ds, self.test_ds
-
-
-    def train_future_set(self, list_products, prediction_length, freq, min_date, max_date, add_promo_data=False):
-        future_date = (pd.to_datetime(max_date) + pd.Timedelta(value=prediction_length, unit=freq)).strftime('%Y-%m-%d')
-        self.data_final_future = self.Product_sales(list_products = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
-        if self.promo_data is not None:
-            self.data_final_future = self.data_final_future.merge(self.agg_promo_data(granularity=freq, min_date=min_date, max_date = max_date), how = 'left', on = "OrderDate")
-        self.period_list_future = self.get_period_list(min_date, future_date, freq = freq)
-        self.data_final_future = self.period_list_future.merge(self.data_final_future, how = 'left', on = "OrderDate")
-        self.data_final_future = self.create_temporal_features(self.data_final_future, "OrderDate")
-        # Creating different fields for the training dataset
-        train_total = self.data_final_future[:-prediction_length]
-        # In List_features we add the columns with feat_static_cat (static categorical), feat_static_real (static real), feat_dynamic_cat, feat_dynamic_real (dyamic)
-        self.List_features = list(self.data_final_future.columns)
-        self.List_features.remove("OrderDate")
-        self.List_product_no = ["list_"+str(i+1) for i in range(len(list_products))]
-
-        self.List_features = list(set(self.List_features)-set(['list_1', 'list_2', 'list_3']))
-
-        if ((freq == "M") or (freq == "Month") or (freq == "W") or freq == "Week"):
-            self.List_features.remove("day")
-        min_date = pd.to_datetime(min_date, yearfirst= True)
-        max_date = pd.to_datetime(max_date, yearfirst = True)
-        
-        
-        # Drawing test and train sets
-        if algorithm=='DeepAR':
-            self.train_final_ds = ListDataset([{'target': train_total[list_product].values, 
-                                          'start': pd.Timestamp(min_date, freq=freq),
-                                          'feat_dynamic_real': train_total[self.List_features]}
+                                          'feat_dynamic_real': data_train[self.List_features]}
                                          for list_product in self.List_product_no],
                                         freq=freq,
                                         one_dim_target = False)
             for p in range(len(self.List_product_no)):
                 self.train_final_ds.list_data[p]['target'] = self.train_final_ds.list_data[p]['target'][0]
 
-            self.future_ds = ListDataset([{'target': self.data_final_future[list_product].values, 
+            self.future_ds = ListDataset([{'target': self.data_predict[list_product].values, 
                                           'start': pd.Timestamp(min_date, freq=freq),
-                                          'feat_dynamic_real': self.data_final_future[self.List_features]}
+                                          'feat_dynamic_real': self.data_predict[self.List_features]}
                                          for list_product in self.List_product_no],
                                         freq=freq,
                                         one_dim_target = False)
             for p in range(len(self.List_product_no)):
                 self.future_ds.list_data[p]['target'] = self.future_ds.list_data[p]['target'][0]
         
-        elif algorithm=='Prophet':
-            self.train_final_ds = ListDataset([{'target': train_total[list_product].values, 
+        elif self.algorithm in ['Prophet', 'ARIMA']:
+            self.train_final_ds = ListDataset([{'target': data_train[list_product].values, 
                                           'start': pd.Timestamp(min_date, freq=freq)}
                                          for list_product in self.List_product_no],
                                         freq=freq,
@@ -252,7 +199,7 @@ class TransactionsData(Data):
             for p in range(len(self.List_product_no)):
                 self.train_final_ds.list_data[p]['target'] = self.train_final_ds.list_data[p]['target'][0]
 
-            self.future_ds = ListDataset([{'target': self.data_final_future[list_product].values, 
+            self.future_ds = ListDataset([{'target': self.data_predict[list_product].values, 
                                           'start': pd.Timestamp(min_date, freq=freq)}
                                          for list_product in self.List_product_no],
                                         freq=freq,
