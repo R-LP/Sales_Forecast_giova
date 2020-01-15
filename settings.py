@@ -25,7 +25,7 @@ promo_data="Promo_data.csv"
 #promo_data=None
 
 # Setting the name of the algorithm - choices ar: ARIMA, DeepAR, Prophet or All
-algorithm = "Prophet"
+algorithm = "All"
 
 # DeepAR hyperparameters
 epochs=5

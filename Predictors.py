@@ -80,22 +80,20 @@ class Predictor_sales(object):
                 forecast_it = forecast_it.rename(columns={'Product':list_products[p]})
                 ts_it.append(pd.DataFrame({0:eval_ds.list_data[p]['target']}, 
                                        index=pd.date_range(min_date, periods=len(eval_ds.list_data[p]['target']), freq = freq, tz = None)))
-        return forecast_it, ts_it
+            return forecast_it, ts_it
+        return list(forecast_it), list(ts_it)
 
 
     # Plotting depends on the prediction output structure
-    def plot_prob_forecasts(self, eval_ds):
+    def plot_prob_forecasts(self, forecast_plot, ts_plot):
         if len(list_products)!=1:
             print('Which product no?')
             p = int(input({key: value for (key, value) in enumerate(list_products)}))
         else:
             p = 0
         if self.algorithm not in ['ARIMA']:
-            forecast_plot, ts_plot = self.make_predictions(eval_ds)
-            tss = list(ts_plot)
-            forecasts = list(forecast_plot)
-            ts_entry = tss[p] # we plot only the first time serie to forecast
-            forecast_entry = forecasts[p]
+            ts_entry = ts_plot[p] # we plot only the first time serie to forecast
+            forecast_entry = forecast_plot[p]
             plot_length = 70 
             prediction_intervals = (50.0, 90.0)
             legend = ["observations", "median prediction"] + [f"{k}% prediction interval" for k in prediction_intervals][::-1]
@@ -108,10 +106,9 @@ class Predictor_sales(object):
             plt.show()
 
         else:
-            forecast_it, ts_it = self.make_predictions(eval_ds)
-            history_plot_lenth = min(prediction_length*5, len(ts_it[0]))
-            ts_plot = ts_it[p][-history_plot_lenth:].set_index(pd.DatetimeIndex(ts_it[p][-history_plot_lenth:].index))
-            forecast_plot = forecast_it.set_index(pd.DatetimeIndex(forecast_it['OrderDate'])).drop(columns=['OrderDate']).iloc[:,p]
+            history_plot_lenth = min(prediction_length*5, len(ts_plot[0]))
+            ts_plot = ts_plot[p][-history_plot_lenth:].set_index(pd.DatetimeIndex(ts_plot[p][-history_plot_lenth:].index))
+            forecast_plot = forecast_plot.set_index(pd.DatetimeIndex(forecast_plot['OrderDate'])).drop(columns=['OrderDate']).iloc[:,p]
             plt.figure(figsize=(10,6))
             plt.plot(ts_plot, color='C0', label='Observations')
             plt.plot(forecast_plot, color='b', label='Predictions')
@@ -126,14 +123,10 @@ class Predictor_sales(object):
 
         if self.algorithm not in ['ARIMA']:
             if len(list_products)!=1:
-                forecast_csv = list(forecast_it)
-                ts_csv = list(ts_it)
                 forecast_entry = []
-                ts_entry = []
                 for p in range(len(list_products)):
-                    forecast_entry.append(forecast_csv[p].mean)
-                    ts_entry.append(ts_csv[p])
-                start_dt = pd.date_range(min_date, periods=len(ts_entry[0]), freq = freq, tz = None)[-prediction_length]
+                    forecast_entry.append(forecast_it[p].mean)
+                start_dt = pd.date_range(min_date, periods=len(ts_it[0]), freq = freq, tz = None)[-prediction_length]
                 #print(start_dt)
                 forecast_csv = pd.DataFrame(data=np.array(forecast_entry).transpose(), 
                                             columns=list_products, 
@@ -142,16 +135,16 @@ class Predictor_sales(object):
                 forecast_csv.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
                 for p in range(len(list_products)):
                     if p==0:
-                        ts_csv = ts_entry[0]
+                        ts_csv = ts_it[0]
                     else:
-                        ts_csv = ts_csv.join(ts_entry[p], rsuffix=p)
+                        ts_csv = ts_csv.join(ts_it[p], rsuffix=p)
                 ts_csv.columns = list_products
                 ts_csv = ts_csv.rename_axis('OrderDate').reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
             else:
-                forecast_entry = list(forecast_it)[0]
-                ts_entry = list(ts_it)[0]
+                forecast_entry = forecast_it[0]
+                ts_entry = ts_it[0]
                 forecast_csv = pd.Series(forecast_entry.mean, index=pd.date_range(forecast_entry.start_date, periods=prediction_length, freq=freq), name=list_products[0])
                 forecast_csv = forecast_csv.rename_axis('OrderDate').reset_index()
                 forecast_csv.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
@@ -183,8 +176,9 @@ class Predictor_sales(object):
         mse_products = []
         for p in range(len(list_products)):
             mse_products.append(mean_squared_error(ts_csv[list_products[p]], forecast_csv[list_products[p]]))
-            print(list_products[p], ':', "%.f" % mse_products[p])
-        return(pd.DataFrame({'ProductEnglishname':list_products, 'MSE': mse_products}))
+        mse_df = pd.DataFrame({'ProductEnglishname':list_products, 'MSE': mse_products})
+        print(mse_df)
+        return(mse_df)
 
 
     # For theDeepAR Estimator - NOT IN USE SO FAR - Supposed to build automated feature engineering on TS

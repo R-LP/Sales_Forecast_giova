@@ -2,13 +2,14 @@ import warnings
 warnings.filterwarnings("ignore")
 from Predictors import *
 from data_processing import *
+import copy
 
 
 ## Uploading the data
 Transactions_obj = TransactionsData(data, promo_data)
 
 
-######## Automated selection for best fit algorithm - Evaluating the average performance on the test set 
+######## Automated selection for best fit algorithm - Evaluating the performance on the test set
 if algorithm=='All':
 
     dict_mse_algo = {}
@@ -87,6 +88,8 @@ else:
 
     ## Training predictor object & Computing forecasts
     forecast_it, ts_it = Predictor_instance_test.make_predictions(test_ds)
+    forecast_plot = copy.deepcopy(forecast_it)
+    ts_plot = copy.deepcopy(ts_it)
     ## Saving forecasts into csv file
     Predictor_instance_test.save_csv("test", forecast_it, ts_it)
     ## Computing mse
@@ -95,8 +98,8 @@ else:
     mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test)
     mean_mse = mse_df['MSE'].mean()
     print('mean_mse:', '%0.f' %mean_mse)
-    ## Plotting results - Retrains the model: might be computationally intensive
-    Predictor_instance_test.plot_prob_forecasts(test_ds)
+    ## Plotting results - From deepcopy forecast objects
+    Predictor_instance_test.plot_prob_forecasts(forecast_plot, ts_plot)
 
 
 
@@ -127,9 +130,11 @@ elif algorithm=='ARIMA':
 
 ## Training predictor object & Computing forecasts
 forecast_future_it, ts_future_it = Predictor_instance_final.make_predictions(future_ds)
+forecast_future_plot = copy.deepcopy(forecast_future_it)
+ts_future_plot = copy.deepcopy(ts_future_it)
 
 ## Saving forecasts into csv file
 Predictor_instance_final.save_csv("future", forecast_future_it, ts_future_it)
 
-## Plotting the results - Retrains the models: computationally intensive
-Predictor_instance_final.plot_prob_forecasts(future_ds)
+## Plotting the results - From deepcopy forecast objects
+Predictor_instance_final.plot_prob_forecasts(forecast_future_plot, ts_future_plot)
