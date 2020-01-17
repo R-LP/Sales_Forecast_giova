@@ -25,7 +25,7 @@ input_cols_mapping = {'OrderDate_test':'OrderDate',
 promo_data=None
 
 # Setting the name of the algorithm - choices ar: ARIMA, DeepAR, Prophet or All
-algorithm = "All"
+algorithm = "ARIMA"
 
 # DeepAR hyperparameters
 epochs=5

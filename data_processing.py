@@ -193,6 +193,7 @@ class TransactionsData(Data):
                                         one_dim_target = False)
             for p in range(len(self.List_product_no)):
                 self.future_ds.list_data[p]['target'] = self.future_ds.list_data[p]['target'][0]
+            
         
         elif self.algorithm in ['Prophet', 'ARIMA']:
             self.train_final_ds = ListDataset([{'target': data_train[list_product].values, 
