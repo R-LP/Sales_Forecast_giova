@@ -14,7 +14,7 @@ list_products=json.loads(os.getenv("list_products"))
 
 
 # Data file
-data="SHU_JP.csv"
+data="data_test.csv"
 # Mapping inputs
 input_cols_mapping = {'OrderDate_test':'OrderDate',
                       'Productname':'ProductEnglishname',

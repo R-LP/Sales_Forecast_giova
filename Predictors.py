@@ -19,7 +19,7 @@ import copy
 
 
 class Predictor_sales(object):
-    def __init__(self, freq = "D", prediction_length = 30, epochs = 50, batch_size = 16, num_batches_per_epoch = 100, num_layers = 4):
+    def __init__(self, freq = "D", prediction_length = 30, epochs = 50, batch_size = 16, num_batches_per_epoch = 100, num_layers = 4, list_products = list_products):
         self.predictor = DeepAREstimator(
             freq=freq,
             prediction_length=prediction_length,
@@ -29,6 +29,7 @@ class Predictor_sales(object):
                             num_batches_per_epoch = num_batches_per_epoch),
             num_layers = num_layers)
         self.algorithm = algorithm
+        self.list_products_names = TransactionsData.get_list_names(list_products)
 
 
     # DeepAR instance to be explicitly trained before predicting
@@ -77,7 +78,7 @@ class Predictor_sales(object):
                 else:
                     temp = pd.DataFrame({'OrderDate':period_list_pred, 'Product':pred})
                     forecast_it = forecast_it.merge(temp, on='OrderDate', how='left')
-                forecast_it = forecast_it.rename(columns={'Product':list_products[p]})
+                forecast_it = forecast_it.rename(columns={'Product':self.list_products_names[p]})
                 ts_it.append(pd.DataFrame({0:eval_ds.list_data[p]['target']}, 
                                        index=pd.date_range(min_date, periods=len(eval_ds.list_data[p]['target']), freq = freq, tz = None)))
             return forecast_it, ts_it
@@ -88,7 +89,7 @@ class Predictor_sales(object):
     def plot_prob_forecasts(self, forecast_plot, ts_plot):
         if len(list_products)!=1:
             print('Which product no?')
-            p = int(input({key: value for (key, value) in enumerate(list_products)}))
+            p = int(input({key: value for (key, value) in enumerate(self.list_products_names)}))
         else:
             p = 0
         if self.algorithm not in ['ARIMA']:
@@ -129,7 +130,7 @@ class Predictor_sales(object):
                 start_dt = pd.date_range(min_date, periods=len(ts_it[0]), freq = freq, tz = None)[-prediction_length]
                 #print(start_dt)
                 forecast_csv = pd.DataFrame(data=np.array(forecast_entry).transpose(), 
-                                            columns=list_products, 
+                                            columns=self.list_products_names, 
                                             index=pd.date_range(start_dt, periods=prediction_length, freq=freq))
                 forecast_csv = forecast_csv.rename_axis('OrderDate').reset_index()
                 forecast_csv.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
@@ -138,17 +139,17 @@ class Predictor_sales(object):
                         ts_csv = ts_it[0]
                     else:
                         ts_csv = ts_csv.join(ts_it[p], rsuffix=p)
-                ts_csv.columns = list_products
+                ts_csv.columns = self.list_products_names
                 ts_csv = ts_csv.rename_axis('OrderDate').reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
             else:
                 forecast_entry = forecast_it[0]
                 ts_entry = ts_it[0]
-                forecast_csv = pd.Series(forecast_entry.mean, index=pd.date_range(forecast_entry.start_date, periods=prediction_length, freq=freq), name=list_products[0])
+                forecast_csv = pd.Series(forecast_entry.mean, index=pd.date_range(forecast_entry.start_date, periods=prediction_length, freq=freq), name=self.list_products_names[0])
                 forecast_csv = forecast_csv.rename_axis('OrderDate').reset_index()
                 forecast_csv.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
-                ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(list_products[0]).reset_index()
+                ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(self.list_products_names[0]).reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
            
         else: # For ARIMA
@@ -159,13 +160,13 @@ class Predictor_sales(object):
                         ts_csv = ts_it[0]
                     else:
                         ts_csv = ts_csv.join(ts_it[p], rsuffix=p)
-                ts_csv.columns = list_products
+                ts_csv.columns = self.list_products_names
                 ts_csv = ts_csv.rename_axis('OrderDate').reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
             else:
                 ts_entry = ts_it[0]
-                ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(list_products[0]).reset_index()
+                ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(self.list_products_names[0]).reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
 
@@ -175,8 +176,8 @@ class Predictor_sales(object):
         ts_csv = ts_csv.loc[ts_csv['OrderDate'].isin(forecast_csv['OrderDate'])]
         mse_products = []
         for p in range(len(list_products)):
-            mse_products.append(mean_squared_error(ts_csv[list_products[p]], forecast_csv[list_products[p]]))
-        mse_df = pd.DataFrame({'ProductEnglishname':list_products, 'MSE': mse_products})
+            mse_products.append(mean_squared_error(ts_csv[self.list_products_names[p]], forecast_csv[self.list_products_names[p]]))
+        mse_df = pd.DataFrame({'ProductEnglishname':self.list_products_names, 'MSE': mse_products})
         print(mse_df)
         return(mse_df)
 
