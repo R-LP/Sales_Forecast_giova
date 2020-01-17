@@ -14,7 +14,7 @@ list_products=json.loads(os.getenv("list_products"))
 
 
 # Data file
-data="data_test.csv"
+data="SHU_JP.csv"
 # Mapping inputs
 input_cols_mapping = {'OrderDate_test':'OrderDate',
                       'Productname':'ProductEnglishname',
@@ -25,10 +25,10 @@ input_cols_mapping = {'OrderDate_test':'OrderDate',
 promo_data=None
 
 # Setting the name of the algorithm - choices ar: ARIMA, DeepAR, Prophet or All
-algorithm = "ARIMA"
+algorithm = "DeepAR"
 
 # DeepAR hyperparameters
-epochs=5
+epochs=25
 num_layers=2
 batch_size=32
 
@@ -46,7 +46,7 @@ prophet_params = {'mcmc_samples' : mcmc_samples, 'changepoint_prior_scale' : cha
 
 
 # Prediction frame settings
-prediction_length=10
+prediction_length=20
 freq="D"
 min_date="2016-01-01"
 max_date="2019-10-31"
