@@ -103,6 +103,16 @@ class TransactionsData(Data):
         self.promo_data = self.read_from_promo_folder(filename_promo)
         self.algorithm = algorithm
 
+    @staticmethod
+    def get_list_names(list_of_lists):
+        list_product_names = []
+        for p in list_products:
+            if isinstance(p, list):
+                list_product_names.append(' - '.join(p))
+            else:
+                list_product_names.append(p)
+        return(list_product_names)
+
     ## Aggregate at the required time granularity and grouping by specified products
     def Product_sales(self, list_products, granularity, min_date, max_date):
         self.period_list = self.get_period_list(min_date, max_date, freq = granularity)
@@ -113,7 +123,10 @@ class TransactionsData(Data):
         print(f">> Aggregating transactions at productenglishname level and at granularity %s" %granularity)
         for i, product in enumerate(list_products):
             _col_name = "list_" + str((i+1))
-            _data = self.data.loc[self.data["ProductEnglishname"].isin([product])]
+            if isinstance(product, list):
+                _data = self.data.loc[self.data["ProductEnglishname"].isin(product)]
+            else:
+                _data = self.data.loc[self.data["ProductEnglishname"].isin([product])]
             _data = _data.rename(columns={'SalesQuantity' : _col_name}, inplace = False)
             _data.set_index(pd.DatetimeIndex(_data['OrderDate']), inplace=True)
             _data = _data.drop(columns=['OrderDate'])
