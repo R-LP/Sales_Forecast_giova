@@ -21,6 +21,10 @@ from gluonts.transform import (
 # The class data inherits from the class of the object intance
 class Data(object):
 
+    def __init__(self):
+        self.data = None
+
+
     # Return all paths to files in the transactions files folder
     @staticmethod
     def get_transactions_files_list():

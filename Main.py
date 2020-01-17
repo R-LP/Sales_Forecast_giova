@@ -6,6 +6,7 @@ import copy
 
 
 ## Uploading the data
+promo_data = None
 Transactions_obj = TransactionsData(data, promo_data)
 
 

@@ -182,20 +182,20 @@ class Predictor_sales(object):
 
 
     # For theDeepAR Estimator - NOT IN USE SO FAR - Supposed to build automated feature engineering on TS
-    def create_transformation(self, freq, context_length, prediction_length):
-        return Chain(
-            [
-                AddObservedValuesIndicator(
-                    target_field=FieldName.TARGET,
-                    output_field=FieldName.OBSERVED_VALUES,
-                ),
-                AddAgeFeature(
-                    target_field=FieldName.TARGET,
-                    output_field=FieldName.FEAT_AGE,
-                    pred_length=prediction_length,
-                    log_scale=True,
-                ),
-            ]
-        )
+    # def create_transformation(self, freq, context_length, prediction_length):
+    #     return Chain(
+    #         [
+    #             AddObservedValuesIndicator(
+    #                 target_field=FieldName.TARGET,
+    #                 output_field=FieldName.OBSERVED_VALUES,
+    #             ),
+    #             AddAgeFeature(
+    #                 target_field=FieldName.TARGET,
+    #                 output_field=FieldName.FEAT_AGE,
+    #                 pred_length=prediction_length,
+    #                 log_scale=True,
+    #             ),
+    #         ]
+    #     )
 
 

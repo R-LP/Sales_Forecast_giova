@@ -14,15 +14,15 @@ list_products=json.loads(os.getenv("list_products"))
 
 
 # Data file
-data="data_test.csv"
+data="SHU_JP.csv"
 # Mapping inputs
 input_cols_mapping = {'OrderDate_test':'OrderDate',
                       'Productname':'ProductEnglishname',
                       'SalesQuantity_test':'SalesQuantity'}
 
 # Promo data file
-promo_data="Promo_data.csv"
-#promo_data=None
+#promo_data="Promo_data.csv"
+promo_data=None
 
 # Setting the name of the algorithm - choices ar: ARIMA, DeepAR, Prophet or All
 algorithm = "All"
