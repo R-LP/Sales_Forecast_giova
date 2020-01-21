@@ -52,7 +52,7 @@ class Data(object):
 
     def proper_input_col_names(self, csv_file, input_cols_mapping):
         input_colnames = list(csv_file.columns)
-        if ('OrderDate' not in input_colnames)|('ProductEnglishname' not in input_colnames)|('SalesQuantity' not in input_colnames):
+        if ('OrderDate' not in input_colnames)|('Granulcolname' not in input_colnames)|('SalesQuantity' not in input_colnames):
             return csv_file.rename(columns=input_cols_mapping)
 
 
@@ -98,7 +98,7 @@ class TransactionsData(Data):
         print(f">> Loading Transaction Data")
         self.data = self.read_from_transactions_folder(filename)
         self.data = self.proper_input_col_names(self.data, input_cols_mapping)
-        self.data = self.data[["OrderDate","ProductEnglishname", "SalesQuantity"]]
+        self.data = self.data[["OrderDate","Granulcolname", "SalesQuantity"]]
         self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
         self.promo_data = self.read_from_promo_folder(filename_promo)
         self.algorithm = algorithm
@@ -120,14 +120,13 @@ class TransactionsData(Data):
         self.data["OrderDate"] = pd.to_datetime(self.data['OrderDate'], format='%Y-%m-%d', errors='ignore')
         if type(list_products) is not list:
             print(f">> The product entered as an input should be a list of product")
-        print(f">> Aggregating transactions at productenglishname level and at granularity %s" %granularity)
+        print(f">> Aggregating transactions at Granulcolname level and at granularity %s" %granularity)
         for i, product in enumerate(list_products):
             _col_name = "list_" + str((i+1))
             if isinstance(product, list):
-                print(True)
-                _data = self.data.loc[self.data["ProductEnglishname"].isin(product)]
+                _data = self.data.loc[self.data["Granulcolname"].isin(product)]
             else:
-                _data = self.data.loc[self.data["ProductEnglishname"].isin([product])]
+                _data = self.data.loc[self.data["Granulcolname"].isin([product])]
             _data = _data.rename(columns={'SalesQuantity' : _col_name}, inplace = False)
             _data.set_index(pd.DatetimeIndex(_data['OrderDate']), inplace=True)
             _data = _data.drop(columns=['OrderDate'])

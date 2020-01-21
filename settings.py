@@ -15,13 +15,13 @@ list_products=json.loads(os.getenv("list_products"))
 
 
 # Data file - .csv file name
-data="HR_HK.csv"
+data="Biotherm_HK.csv"
 # Mapping inputs of you data if the following columns names are not exactly the same - replace xxx, yyy, zzz with the date, the product key and the quantity column names respectively
 # input_cols_mapping = {'xxx':'OrderDate',
 #                      'yyy':'ProductEnglishname',
 #                      'zzz':'SalesQuantity'}
 input_cols_mapping = {'Date.Transaction':'OrderDate',
-                      'ProductEnglishname':'ProductEnglishname',
+                      'ProductLine':'Granulcolname',
                       'Quantity.Final':'SalesQuantity'}
 
 # Promo data file - .csv additional data file - Make sure OrderDate is the name of the date column - If no additional data, let it be None
@@ -31,8 +31,8 @@ promo_data=None
 algorithm = "Prophet"
 
 # Prediction frame settings
-prediction_length=20 # int
-freq="D" # D,W,Y
+prediction_length=13 # int
+freq="W" # D,W,Y
 min_date="2017-06-01" # "yyyy-mm-dd"
 max_date="2019-05-31" # "yyyy-mm-dd"
 
@@ -45,7 +45,7 @@ num_layers=2
 batch_size=32
 
 # Prophet hyperparameters
-mcmc_samples=10 #300
+mcmc_samples=0
 changepoint_prior_scale=0.01
 interval_width=0.9
 seasonality_mode='multiplicative'
