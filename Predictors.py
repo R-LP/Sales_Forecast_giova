@@ -121,8 +121,8 @@ class Predictor_sales(object):
     def save_csv(self, name, forecast_it, ts_it):
 #         ts_name = "ts " + name + ".csv"
 #         forecast_name = "forecast " + name + ".csv"
-        ts_name = "ts " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name + ".csv"
-        forecast_name = "forecast " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name + ".csv"
+        ts_name = "ts" +"_"+ str(data)+ "_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name + ".csv"
+        forecast_name = "forecast" +"_"+ str(data)+"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name + ".csv"
 
 
         if self.algorithm not in ['ARIMA']:
@@ -180,7 +180,7 @@ class Predictor_sales(object):
         mse_products = []
         for p in range(len(list_products)):
             mse_products.append(mean_squared_error(ts_csv[self.list_products_names[p]], forecast_csv[self.list_products_names[p]]))
-        mse_df = pd.DataFrame({'ProductEnglishname':self.list_products_names, 'MSE': mse_products})
+        mse_df = pd.DataFrame({'Granulcolname':self.list_products_names, 'MSE': mse_products})
         print(mse_df)
         return(mse_df)
 
