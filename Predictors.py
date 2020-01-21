@@ -119,8 +119,11 @@ class Predictor_sales(object):
 
     # Run saving function before plotting anything
     def save_csv(self, name, forecast_it, ts_it):
-        ts_name = "ts " + name + ".csv"
-        forecast_name = "forecast " + name + ".csv"
+#         ts_name = "ts " + name + ".csv"
+#         forecast_name = "forecast " + name + ".csv"
+        ts_name = "ts " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name + ".csv"
+        forecast_name = "forecast " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name + ".csv"
+
 
         if self.algorithm not in ['ARIMA']:
             if len(list_products)!=1:

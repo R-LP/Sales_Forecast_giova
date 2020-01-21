@@ -69,7 +69,7 @@ else:
     ## Creating train and test sets out of the transaction/promo data object
     train_ds, test_ds = Transactions_obj.train_predict_sets(list_products = list_products, type_split = 'train_test', prediction_length = prediction_length, 
                                                             min_date = min_date, max_date = max_date, freq = freq)
-    print(test_ds.list_data)
+    
     ## Init instance
     Predictor_instance_test = Predictor_sales()
 
