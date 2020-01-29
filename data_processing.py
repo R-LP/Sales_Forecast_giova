@@ -2,6 +2,7 @@ from settings import *
 import pandas as pd
 import numpy as np
 import os
+import re
 import missingno
 from gluonts.dataset.common import ListDataset
 import matplotlib.pyplot as plt
@@ -90,6 +91,9 @@ class Data(object):
     def get_columns(self):
         return self.data.columns
 
+    def remove_special_char(self, df, column):
+        return df[column].apply(lambda x: re.sub('[^a-zA-Z0-9 \n\.]', '_', x))
+
 
 
 class TransactionsData(Data):
@@ -99,6 +103,7 @@ class TransactionsData(Data):
         self.data = self.read_from_transactions_folder(filename)
         self.data = self.proper_input_col_names(self.data, input_cols_mapping)
         self.data = self.data[["OrderDate","Granulcolname", "SalesQuantity"]]
+        self.data['Granulcolname'] = self.remove_special_char(self.data, 'Granulcolname')
         self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
         self.promo_data = self.read_from_promo_folder(filename_promo)
         self.algorithm = algorithm

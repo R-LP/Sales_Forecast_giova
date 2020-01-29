@@ -27,9 +27,6 @@ pip install -r requirements.txt
 
 Set up input and output directories'locations in file *forecast_env.env*
 
-Then input the products'names you want to analyse. The input list can be a list of products or a list of lists of products. Aggregations will thus be computed at the list level to study forecasts on groups of products.
-
-
 ## Specify your prediction settings
 
 Open the *settings.py* file. You need to specify the name of your data file, the time frame you are working on and the which algorithm you want to use. 
@@ -40,6 +37,13 @@ The available algorithms are ARIMA, DeepAR and Prophet. You may also use All alg
 * Choose the prediction frame parameters
 
 * Hyperparameters aren't supposed to be modified but you can play if it improves your prediction
+
+## Specify what you want to predict
+
+In the *settings.py* file:
+* Specify the column of aggregation in the mapping of 'Granulcolname'
+
+* Then input the products'names you want to analyse. The input list can be a list of products or a list of lists of products. Aggregations will thus be computed at the list level to study forecasts on groups of products.
 
 
 ## Run the predictions

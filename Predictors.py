@@ -45,7 +45,8 @@ class Predictor_sales(object):
 
     # ARIMA instance to implicitly trained during definition
     def train_ARIMA_predictor(self, eval_ds, p):
-        return auto_arima(eval_ds.list_data[p]['target'][:-prediction_length], error_action='ignore', suppress_warnings=True, n_jobs=-1)
+        return auto_arima(eval_ds.list_data[p]['target'][:-prediction_length], error_action='ignore',
+                          suppress_warnings=True, n_jobs=-1)
 
 
     def train_predictor(self, train_ds):
@@ -119,13 +120,12 @@ class Predictor_sales(object):
 
     # Run saving function before plotting anything
     def save_csv(self, name, forecast_it, ts_it):
-#         ts_name = "ts " + name + ".csv"
-#         forecast_name = "forecast " + name + ".csv"
-        ts_name = "ts" +"_"+ str(data)+ "_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name + ".csv"
-        forecast_name = "forecast" +"_"+ str(data)+"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name + ".csv"
+         ts_name = "ts " + name + ".csv"
+         forecast_name = "forecast " + name + ".csv"
+         #ts_name = "ts" +"_"+ str(data)+ "_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name +"_"+str(list_products[0])+ ".csv"
+         #forecast_name = "forecast" +"_"+ str(data)+"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name +"_"+str(list_products[0])+".csv"
 
-
-        if self.algorithm not in ['ARIMA']:
+         if self.algorithm not in ['ARIMA']:
             if len(list_products)!=1:
                 forecast_entry = []
                 for p in range(len(list_products)):
@@ -155,9 +155,9 @@ class Predictor_sales(object):
                 ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(self.list_products_names[0]).reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
            
-        else: # For ARIMA
-            forecast_it.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
-            if len(list_products)!=1:
+         else: # For ARIMA
+             forecast_it.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
+             if len(list_products)!=1:
                 for p in range(len(list_products)):
                     if p==0:
                         ts_csv = ts_it[0]
@@ -167,10 +167,10 @@ class Predictor_sales(object):
                 ts_csv = ts_csv.rename_axis('OrderDate').reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
-            else:
-                ts_entry = ts_it[0]
-                ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(self.list_products_names[0]).reset_index()
-                ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
+             else:
+                 ts_entry = ts_it[0]
+                 ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(self.list_products_names[0]).reset_index()
+                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
 
 

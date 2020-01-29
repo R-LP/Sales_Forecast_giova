@@ -11,18 +11,18 @@ load_dotenv(os.path.join(os.getcwd(), "forecast_env.env"))
 OUTPUT_FOLDER = os.getenv("OUTPUT_FOLDER")
 TRANSACTIONS_FOLDER = os.getenv("TRANSACTIONS_FOLDER")
 PROMO_DATA_FOLDER = os.getenv("PROMO_DATA_FOLDER")
-list_products=json.loads(os.getenv("list_products"))
+# list_products=json.loads(os.getenv("list_products"))
 
 
 # Data file - .csv file name
-data="Biotherm_HK.csv"
+data="YSL.csv"
 # Mapping inputs of you data if the following columns names are not exactly the same - replace xxx, yyy, zzz with the date, the product key and the quantity column names respectively
 # input_cols_mapping = {'xxx':'OrderDate',
 #                      'yyy':'ProductEnglishname',
 #                      'zzz':'SalesQuantity'}
-input_cols_mapping = {'Date.Transaction':'OrderDate',
-                      'ProductLine':'Granulcolname',
-                      'Quantity.Final':'SalesQuantity'}
+input_cols_mapping = {'OrderDate':'OrderDate',
+                      'ProductEnglishname':'Granulcolname',
+                      'SalesQuantity':'SalesQuantity'}
 
 # Promo data file - .csv additional data file - Make sure OrderDate is the name of the date column - If no additional data, let it be None
 promo_data=None
@@ -31,10 +31,10 @@ promo_data=None
 algorithm = "Prophet"
 
 # Prediction frame settings
-prediction_length=13 # int
+prediction_length=52 # int
 freq="W" # D,W,Y
-min_date="2017-06-01" # "yyyy-mm-dd"
-max_date="2019-05-31" # "yyyy-mm-dd"
+min_date="2017-01-01" # "yyyy-mm-dd"
+max_date="2019-12-31" # "yyyy-mm-dd"
 
 
 ###################################### Algorithms hyperparameters ######################################
@@ -49,8 +49,18 @@ mcmc_samples=0
 changepoint_prior_scale=0.01
 interval_width=0.9
 seasonality_mode='multiplicative'
+yearly_seasonality=True
 weekly_seasonality=True
 daily_seasonality=True
 regressor_list = []
-prophet_params = {'mcmc_samples' : mcmc_samples, 'changepoint_prior_scale' : changepoint_prior_scale, 'interval_width' : interval_width, 'seasonality_mode' : seasonality_mode,
-                        'weekly_seasonality' : weekly_seasonality, 'daily_seasonality' : daily_seasonality}
+prophet_params = {'mcmc_samples' : mcmc_samples, 'changepoint_prior_scale' : changepoint_prior_scale, 'interval_width' : interval_width,
+                  'seasonality_mode' : seasonality_mode,
+                  'weekly_seasonality' : weekly_seasonality,
+                  'daily_seasonality' : daily_seasonality,
+                  'yearly_seasonality' : yearly_seasonality,}
+
+###################################### Product list to forecast ######################################
+## Use "" for strings instead of '' - Can be a list of lists 
+## Replace special characters by '_'
+
+list_products=["ROUGE PUR COUTURE THE SLIM 21"]
