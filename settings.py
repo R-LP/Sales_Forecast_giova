@@ -15,7 +15,7 @@ PROMO_DATA_FOLDER = os.getenv("PROMO_DATA_FOLDER")
 
 
 # Data file - .csv file name
-data="YSL.csv"
+data="GAB.csv"
 # Mapping inputs of you data if the following columns names are not exactly the same - replace xxx, yyy, zzz with the date, the product key and the quantity column names respectively
 # input_cols_mapping = {'xxx':'OrderDate',
 #                      'yyy':'ProductEnglishname',
@@ -28,7 +28,7 @@ input_cols_mapping = {'OrderDate':'OrderDate',
 promo_data=None
 
 # Setting the name of the algorithm - choices ar: ARIMA, DeepAR, Prophet or All
-algorithm = "Prophet"
+algorithm = "ARIMA"
 
 # Prediction frame settings
 prediction_length=52 # int
@@ -40,7 +40,7 @@ max_date="2019-12-31" # "yyyy-mm-dd"
 ###################################### Algorithms hyperparameters ######################################
 
 # DeepAR hyperparameters
-epochs=5
+epochs=2
 num_layers=2
 batch_size=32
 
@@ -63,4 +63,6 @@ prophet_params = {'mcmc_samples' : mcmc_samples, 'changepoint_prior_scale' : cha
 ## Use "" for strings instead of '' - Can be a list of lists 
 ## Replace special characters by '_'
 
-list_products=["ROUGE PUR COUTURE THE SLIM 21"]
+#list_products = ['LIP MAESTRO 405_MAD',  'ECSTASY LACQUER 500',  'LIP MAESTRO 400',  'LIP MAESTRO 200 CA']
+list_products = ['LIP MAESTRO 405_MAD']
+

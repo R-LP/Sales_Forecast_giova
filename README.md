@@ -55,11 +55,13 @@ Whatever the chosen algorithm, the process is to:
 * Build train set as df[:-prediction_length] and test sets as df[-prediction_length:]
 
 Then:
+
 * Create a predictor instance, train and compute performance on the **test set**
 * Plot test predictions
 * Save test predictions in output_folder as .csv (ts as actual values, forecast as predicted values)
 
 Then:
+
 * Create a predictor instance, train and compute performance on the **training set**
 * Plot train predictions 
 * Save train predictions in output_folder as .csv (ts as actual values, forecast as predicted values)
