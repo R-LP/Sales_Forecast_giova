@@ -4,6 +4,7 @@ import numpy as np
 import os
 import re
 import missingno
+from sklearn.preprocessing import MinMaxScaler
 from gluonts.dataset.common import ListDataset
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -126,8 +127,10 @@ class TransactionsData(Data):
         if type(list_products) is not list:
             print(f">> The product entered as an input should be a list of product")
         print(f">> Aggregating transactions at Granulcolname level and at granularity %s" %granularity)
+        self.list_col_name_no = []
         for i, product in enumerate(list_products):
             _col_name = "list_" + str((i+1))
+            self.list_col_name_no.append(_col_name)
             if isinstance(product, list):
                 _data = self.data.loc[self.data["Granulcolname"].isin(product)]
             else:
@@ -142,6 +145,13 @@ class TransactionsData(Data):
             else:
                 agg_data = agg_data.merge(_data, how = 'left', on = "OrderDate")
             agg_data[_col_name].fillna(0, inplace = True)
+            #self.dict_scalers[i] = MinMaxScaler()
+            #self.dict_scalers[i].fit(list(agg_data[_col_name]))
+            #agg_data[_col_name] = self.dict_scalers[i].transform(agg_data[_col_name])'
+        self.scaler = MinMaxScaler()
+        self.scaler.fit(agg_data[self.list_col_name_no])
+        agg_data[self.list_col_name_no] = self.scaler.transform(agg_data[self.list_col_name_no])
+        agg_data[_col_name].fillna(0, inplace = True)
 
         agg_data = self.create_temporal_features(agg_data, "OrderDate")
         #print(f">>agg_data tail")

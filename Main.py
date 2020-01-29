@@ -4,7 +4,7 @@ from Predictors import *
 from data_processing import *
 import copy
 
-
+# list_products = list_products_clean
 ## Uploading the data
 Transactions_obj = TransactionsData(data, promo_data)
 
@@ -52,7 +52,7 @@ if algorithm=='All':
     Predictor_instance_test = Predictor_sales()
     Predictor_instance_test.algorithm = 'ARIMA'
     forecast_it, ts_it = Predictor_instance_test.make_predictions(test_ds)
-    Predictor_instance_test.save_csv("test", forecast_it, ts_it)
+    Predictor_instance_test.save_csv("test_"+str(list_products[0]), forecast_it, ts_it)
     ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'ts test.csv'))
     forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'forecast test.csv'))
     mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test)
@@ -91,15 +91,17 @@ else:
     forecast_plot = copy.deepcopy(forecast_it)
     ts_plot = copy.deepcopy(ts_it)
     ## Saving forecasts into csv file
-    Predictor_instance_test.save_csv("test", forecast_it, ts_it)
+    Predictor_instance_test.save_csv("test", forecast_it, ts_it, Transactions_obj.scaler)
     ## Computing mse
-    #ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER,  "ts " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test' + ".csv"))
-    #forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, "forecast " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test' + ".csv"))
-    ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'ts test.csv'))
-    forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'forecast test.csv'))
-    mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test)
+#     ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER,  "ts" +"_"+ str(data)+ "_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test_'+str(list_products[0]) + ".csv"))
+#     forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, "forecast"+ "_"+ str(data)+"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test_'+str(list_products[0]) + ".csv"))
+    ts_name = "ts " + 'test' + ".csv"
+    ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, ts_name))
+    forecast_name = "forecast " + 'test' + ".csv"
+    forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, forecast_name))
+    mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test, Transactions_obj.scaler)
     mean_mse = mse_df['MSE'].mean()
-    print('mean_mse:', '%0.f' %mean_mse)
+    print('mean_mse:', mean_mse)
     ## Plotting results - From deepcopy forecast objects
     Predictor_instance_test.plot_prob_forecasts(forecast_plot, ts_plot)
 
@@ -136,7 +138,7 @@ forecast_future_plot = copy.deepcopy(forecast_future_it)
 ts_future_plot = copy.deepcopy(ts_future_it)
 
 ## Saving forecasts into csv file
-Predictor_instance_final.save_csv("future", forecast_future_it, ts_future_it)
+Predictor_instance_final.save_csv("future", forecast_future_it, ts_future_it, Transactions_obj.scaler)
 
 ## Plotting the results - 
 Predictor_instance_final.plot_prob_forecasts(forecast_future_plot, ts_future_plot)

@@ -119,7 +119,7 @@ class Predictor_sales(object):
 
 
     # Run saving function before plotting anything
-    def save_csv(self, name, forecast_it, ts_it):
+    def save_csv(self, name, forecast_it, ts_it, scaler):
          ts_name = "ts " + name + ".csv"
          forecast_name = "forecast " + name + ".csv"
          #ts_name = "ts" +"_"+ str(data)+ "_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ name +"_"+str(list_products[0])+ ".csv"
@@ -132,7 +132,7 @@ class Predictor_sales(object):
                     forecast_entry.append(forecast_it[p].mean)
                 start_dt = pd.date_range(min_date, periods=len(ts_it[0]), freq = freq, tz = None)[-prediction_length]
                 #print(start_dt)
-                forecast_csv = pd.DataFrame(data=np.array(forecast_entry).transpose(), 
+                forecast_csv = pd.DataFrame(data=scaler.inverse_transform(np.array(forecast_entry).transpose()), 
                                             columns=self.list_products_names, 
                                             index=pd.date_range(start_dt, periods=prediction_length, freq=freq))
                 forecast_csv = forecast_csv.rename_axis('OrderDate').reset_index()
@@ -142,45 +142,73 @@ class Predictor_sales(object):
                         ts_csv = ts_it[0]
                     else:
                         ts_csv = ts_csv.join(ts_it[p], rsuffix=p)
-                ts_csv.columns = self.list_products_names
+                idx_ts = ts_csv.index
+                ts_csv = scaler.inverse_transform(ts_csv)
+                ts_csv = pd.DataFrame(ts_csv, columns=self.list_products_names, index=idx_ts)
                 ts_csv = ts_csv.rename_axis('OrderDate').reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
             else:
                 forecast_entry = forecast_it[0]
                 ts_entry = ts_it[0]
-                forecast_csv = pd.Series(forecast_entry.mean, index=pd.date_range(forecast_entry.start_date, periods=prediction_length, freq=freq), name=self.list_products_names[0])
+                forecast_csv = pd.Series(scaler.inverse_transform(np.array(forecast_entry.mean).reshape(-1, 1)).reshape(-1),
+                                        index=pd.date_range(forecast_entry.start_date, periods=prediction_length, freq=freq),
+                                       name=self.list_products_names[0])
                 forecast_csv = forecast_csv.rename_axis('OrderDate').reset_index()
                 forecast_csv.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
-                ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(self.list_products_names[0]).reset_index()
+                idx_ts = ts_entry.index
+                ts_csv = scaler.inverse_transform(np.array(ts_entry).reshape(-1, 1)).reshape(-1)
+                ts_csv = pd.DataFrame(ts_csv, columns=self.list_products_names, index=idx_ts)
+                ts_csv = ts_csv.rename_axis('OrderDate').reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
            
          else: # For ARIMA
-             forecast_it.to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
+             idx_fs = forecast_it.set_index('OrderDate').index
+             forecast_csv = pd.DataFrame(data=scaler.inverse_transform(np.array(forecast_it.set_index('OrderDate'))), 
+                                            columns=self.list_products_names, 
+                                            index=idx_fs)
+             forecast_csv.rename_axis('OrderDate').reset_index().to_csv(os.path.join(OUTPUT_FOLDER, forecast_name), index=False)
              if len(list_products)!=1:
                 for p in range(len(list_products)):
                     if p==0:
                         ts_csv = ts_it[0]
                     else:
                         ts_csv = ts_csv.join(ts_it[p], rsuffix=p)
-                ts_csv.columns = self.list_products_names
+                idx_ts = ts_csv.index
+                ts_csv = scaler.inverse_transform(ts_csv)
+                ts_csv = pd.DataFrame(ts_csv, columns=self.list_products_names, index=idx_ts)
                 ts_csv = ts_csv.rename_axis('OrderDate').reset_index()
                 ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
              else:
                  ts_entry = ts_it[0]
-                 ts_csv = ts_entry.rename_axis('OrderDate')[0].rename(self.list_products_names[0]).reset_index()
+                 idx_ts = ts_entry.index
+                 ts_csv = pd.DataFrame(scaler.inverse_transform(np.array(ts_entry).reshape(-1, 1)).reshape(-1), 
+                                       columns=self.list_products_names,
+                                       index=idx_ts)
+                 ts_csv = ts_csv.rename_axis('OrderDate').reset_index()
                  ts_csv.to_csv(os.path.join(OUTPUT_FOLDER, ts_name), index=False)
 
 
 
     # MSE computation on test data
-    def mse_compute(self, forecast_csv, ts_csv):
+    def mse_compute(self, forecast_txt, ts_txt, scaler=None):
+        ts_csv = ts_txt.copy()
+        forecast_csv = forecast_txt.copy()
         ts_csv = ts_csv.loc[ts_csv['OrderDate'].isin(forecast_csv['OrderDate'])]
+        ts_csv.set_index('OrderDate', inplace=True)
+        forecast_csv.set_index('OrderDate', inplace=True)
         mse_products = []
         for p in range(len(list_products)):
-            mse_products.append(mean_squared_error(ts_csv[self.list_products_names[p]], forecast_csv[self.list_products_names[p]]))
+            if scaler is not None:
+                ts_csv = scaler.transform(ts_csv)
+                forecast_csv = scaler.transform(forecast_csv)
+            mse_products.append(mean_squared_error(ts_csv[:,p], forecast_csv[:,p]))
         mse_df = pd.DataFrame({'Granulcolname':self.list_products_names, 'MSE': mse_products})
+        if scaler is not None:
+            print(">> Rescaled MSE:")
+        else:
+            print(">> Actual MSE, no rescaling:")
         print(mse_df)
         return(mse_df)
 
