@@ -93,48 +93,50 @@ else:
     ## Saving forecasts into csv file
     Predictor_instance_test.save_csv("test", forecast_it, ts_it)
     ## Computing mse
-    ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER,  "ts " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test' + ".csv"))
-    forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, "forecast " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test' + ".csv"))
+    #ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER,  "ts " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test' + ".csv"))
+    #forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, "forecast " +"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test' + ".csv"))
+    ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'ts test.csv'))
+    forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'forecast test.csv'))
     mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test)
     mean_mse = mse_df['MSE'].mean()
     print('mean_mse:', '%0.f' %mean_mse)
     ## Plotting results - From deepcopy forecast objects
-#     Predictor_instance_test.plot_prob_forecasts(forecast_plot, ts_plot)
+    Predictor_instance_test.plot_prob_forecasts(forecast_plot, ts_plot)
 
 
 
-# ######## Final prediction of censored future data
+######## Final prediction of censored future data
 
-# ## Init instance
-# Predictor_instance_final = Predictor_sales()
-# Predictor_instance_final.algorithm = algorithm
+## Init instance
+Predictor_instance_final = Predictor_sales()
+Predictor_instance_final.algorithm = algorithm
 
-# ## Creating train/future sets out of the transaction/promo data object
-# Transactions_obj.algorithm = algorithm
-# train_final_ds, future_ds = Transactions_obj.train_predict_sets(list_products = list_products, type_split = 'total_future', prediction_length = prediction_length, 
-#                                                                 min_date = min_date, max_date = max_date, freq = freq)
+## Creating train/future sets out of the transaction/promo data object
+Transactions_obj.algorithm = algorithm
+train_final_ds, future_ds = Transactions_obj.train_predict_sets(list_products = list_products, type_split = 'total_future', prediction_length = prediction_length, 
+                                                                min_date = min_date, max_date = max_date, freq = freq)
 
-# if algorithm=='DeepAR':
-#     ## Get model structure
-#     Predictor_instance_final.define_DeepAR_predictor(freq = freq, prediction_length = prediction_length, epochs=epochs, num_layers = num_layers, batch_size = batch_size)
+if algorithm=='DeepAR':
+    ## Get model structure
+    Predictor_instance_final.define_DeepAR_predictor(freq = freq, prediction_length = prediction_length, epochs=epochs, num_layers = num_layers, batch_size = batch_size)
 
-#     ## Training predictor object
-#     Predictor_instance_final.train_predictor(train_ds = train_final_ds)
+    ## Training predictor object
+    Predictor_instance_final.train_predictor(train_ds = train_final_ds)
 
-# elif algorithm=='Prophet':
-#     ## Get model structure
-#     Predictor_instance_final.define_Prophet_predictor(freq = freq, prediction_length = prediction_length, prophet_params = prophet_params)
+elif algorithm=='Prophet':
+    ## Get model structure
+    Predictor_instance_final.define_Prophet_predictor(freq = freq, prediction_length = prediction_length, prophet_params = prophet_params)
 
-# elif algorithm=='ARIMA':
-#     print('ARIMA modeling')
+elif algorithm=='ARIMA':
+    print('ARIMA modeling')
 
-# ## Training predictor object & Computing forecasts
-# forecast_future_it, ts_future_it = Predictor_instance_final.make_predictions(future_ds)
-# forecast_future_plot = copy.deepcopy(forecast_future_it)
-# ts_future_plot = copy.deepcopy(ts_future_it)
+## Training predictor object & Computing forecasts
+forecast_future_it, ts_future_it = Predictor_instance_final.make_predictions(future_ds)
+forecast_future_plot = copy.deepcopy(forecast_future_it)
+ts_future_plot = copy.deepcopy(ts_future_it)
 
-# ## Saving forecasts into csv file
-# Predictor_instance_final.save_csv("future", forecast_future_it, ts_future_it)
+## Saving forecasts into csv file
+Predictor_instance_final.save_csv("future", forecast_future_it, ts_future_it)
 
-# ## Plotting the results - 
-# Predictor_instance_final.plot_prob_forecasts(forecast_future_plot, ts_future_plot)
+## Plotting the results - 
+Predictor_instance_final.plot_prob_forecasts(forecast_future_plot, ts_future_plot)
