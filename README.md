@@ -2,35 +2,29 @@
 
 This tool enables to generate sales forecasts from transcastion historical data. Predictions can also be enhanced by additional external data like promotional/marketing data and event related data. 
 
+
 ## Getting Started
 
 Follow this instructions before trying to use the tool.
 
 ### Prerequisites
 
-To get started, please set up a virtual environment using this command line in cmd prompt:
+To get started, please get the environment file *Eki HK - Documents\R and D\6. SKU sales forecast\8. environment\env.7z* and unzip it in the project folder.
+
+Then activate the environment using this command line in cmd prompt in the project folder:
 ```
-python3 -m venv SalesForecastEnv-env
+.\env\Scripts\activate.bat
 ```
 
-Then activate the environment running:
-```
-SalesForecastEnv-env\Scripts\activate.bat
-```
-
-And import all the requirements from the .txt file with:
-```
-pip install -r requirements.txt
-```
 
 ### Directories
 
-Set up input and output directories'locations in file *forecast_env.env*
+Set up input and output directories' locations in file *forecast_env.env*
 
 ## Specify your prediction settings
 
 Open the *settings.py* file. You need to specify the name of your data file, the time frame you are working on and the which algorithm you want to use. 
-The available algorithms are ARIMA, DeepAR and Prophet. You may also use All algorithms which computes the results of the 3 algo on the test set and picks the best predictor for the final computation of the forecast.
+The available algorithms are "ARIMA", "DeepAR" and "Prophet". You may also use "All" algorithms which computes the results of the 3 algo on the test set and picks the best predictor for the final computation of the forecast.
 
 * Complete the **Settings** section with the specifics of you data.
 
@@ -49,7 +43,7 @@ In the *settings.py* file:
 ## Run the predictions
 
 To run compute the model and run predictions, run the *Main.py* file. 
-Whatever the chosen algorithm, the process is to:
+Whatever the chosen algorithm, the file executes the following process:
 
 * Import the data
 * Build train set as df[:-prediction_length] and test sets as df[-prediction_length:]

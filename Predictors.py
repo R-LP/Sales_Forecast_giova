@@ -203,7 +203,9 @@ class Predictor_sales(object):
             if scaler is not None:
                 ts_csv = scaler.transform(ts_csv)
                 forecast_csv = scaler.transform(forecast_csv)
-            mse_products.append(mean_squared_error(ts_csv[:,p], forecast_csv[:,p]))
+                mse_products.append(mean_squared_error(ts_csv[:,p], forecast_csv[:,p]))
+            else:
+                mse_products.append(mean_squared_error(ts_csv.iloc[:,p], forecast_csv.iloc[:,p]))
         mse_df = pd.DataFrame({'Granulcolname':self.list_products_names, 'MSE': mse_products})
         if scaler is not None:
             print(">> Rescaled MSE:")
@@ -213,21 +215,29 @@ class Predictor_sales(object):
         return(mse_df)
 
 
-    # For theDeepAR Estimator - NOT IN USE SO FAR - Supposed to build automated feature engineering on TS
-    # def create_transformation(self, freq, context_length, prediction_length):
-    #     return Chain(
-    #         [
-    #             AddObservedValuesIndicator(
-    #                 target_field=FieldName.TARGET,
-    #                 output_field=FieldName.OBSERVED_VALUES,
-    #             ),
-    #             AddAgeFeature(
-    #                 target_field=FieldName.TARGET,
-    #                 output_field=FieldName.FEAT_AGE,
-    #                 pred_length=prediction_length,
-    #                 log_scale=True,
-    #             ),
-    #         ]
-    #     )
+    def dtw_compute(self, forecast_txt, ts_txt, scaler=None):
+        import dtw
+        
+        ts_csv = ts_txt.copy()
+        forecast_csv = forecast_txt.copy()
+        ts_csv = ts_csv.loc[ts_csv['OrderDate'].isin(forecast_csv['OrderDate'])]
+        ts_csv.set_index('OrderDate', inplace=True)
+        forecast_csv.set_index('OrderDate', inplace=True)
+        dtw_products = []
+        for p in range(len(list_products)):
+            if scaler is not None:
+                ts_csv = scaler.transform(ts_csv)
+                forecast_csv = scaler.transform(forecast_csv)
+                distance = dtw.dtw(ts_csv[:,p], forecast_csv[:,p], distance_only=True).distance
+            else:
+                distance = dtw.dtw(np.array(ts_csv.iloc[:,p]), np.array(forecast_csv.iloc[:,p]), distance_only=True).distance
+            dtw_products.append(distance)
+        dtw_df = pd.DataFrame({'Granulcolname':self.list_products_names, 'DTW': dtw_products})
+        if scaler is not None:
+            print(">> Rescaled DTW:")
+        else:
+            print(">> Actual DTW, no rescaling:")
+        print(dtw_df)
+        return(dtw_df)
 
 

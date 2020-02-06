@@ -93,7 +93,7 @@ class Data(object):
         return self.data.columns
 
     def remove_special_char(self, df, column):
-        return df[column].apply(lambda x: re.sub('[^a-zA-Z0-9 \n\.]', '_', x))
+        return df[column].apply(lambda x: re.sub('[^a-zA-Z0-9 \n\.]', '_', str(x)))
 
 
 
@@ -180,10 +180,10 @@ class TransactionsData(Data):
         elif type_split=='total_future':
             future_date = (pd.to_datetime(max_date) + pd.Timedelta(value=prediction_length, unit=freq)).strftime('%Y-%m-%d')
             self.data_predict = self.Product_sales(list_products = list_products, granularity = freq, min_date = min_date,  max_date = max_date)
-            if self.promo_data is not None:
-                self.data_predict = self.data_predict.merge(self.agg_promo_data(granularity=freq, min_date=min_date, max_date = max_date), how = 'left', on = "OrderDate")
             self.period_list_future = self.get_period_list(min_date, future_date, freq = freq)
             self.data_predict = self.period_list_future.merge(self.data_predict, how = 'left', on = "OrderDate")
+            if self.promo_data is not None:
+                self.data_predict = self.data_predict.merge(self.agg_promo_data(granularity=freq, min_date=min_date, max_date = future_date), how = 'outer', on = "OrderDate")
             self.data_predict = self.create_temporal_features(self.data_predict, "OrderDate")
         
         # Creating the training set as a truncation of the prediction set
