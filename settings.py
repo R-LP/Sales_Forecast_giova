@@ -1,8 +1,3 @@
-############################################# Requirements #############################################
-## gluonts.__version__ = '0.4.2'
-## fbprophet.__version__ = '0.5' Embedded inside GluonTs
-## pyramid.__version__ = '1.10.4'
-
 ############################################### Settings ###############################################
 from dotenv import load_dotenv
 import os
@@ -28,21 +23,21 @@ input_cols_mapping = {'OrderDate':'OrderDate',
 promo_data=None
 
 # Setting the name of the algorithm - choices ar: ARIMA, DeepAR, Prophet or All
-algorithm = "ARIMA"
+algorithm = "Prophet"
 
-# Prediction frame settings
-prediction_length=52 # int
+# Prediction frame settings - Minimum historical date and Maximum historical date
+prediction_length=26 # int
 freq="W" # D,W,Y
 min_date="2017-01-01" # "yyyy-mm-dd"
-max_date="2019-12-31" # "yyyy-mm-dd"
+max_date="2019-06-30" # "yyyy-mm-dd"
 
 
 ###################################### Algorithms hyperparameters ######################################
 
 # DeepAR hyperparameters
-epochs=2
-num_layers=2
-batch_size=32
+epochs=3
+num_layers=3
+batch_size=64
 
 # Prophet hyperparameters
 mcmc_samples=0
@@ -63,6 +58,5 @@ prophet_params = {'mcmc_samples' : mcmc_samples, 'changepoint_prior_scale' : cha
 ## Use "" for strings instead of '' - Can be a list of lists 
 ## Replace special characters by '_'
 
-#list_products = ['LIP MAESTRO 405_MAD',  'ECSTASY LACQUER 500',  'LIP MAESTRO 400',  'LIP MAESTRO 200 CA']
-list_products = ['LIP MAESTRO 405_MAD']
+list_products = ['LIP MAESTRO 405_MAD',  'ECSTASY LACQUER 500',  'LIP MAESTRO 400',  'LIP MAESTRO 200 CA']
 

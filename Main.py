@@ -23,10 +23,10 @@ if algorithm=='All':
     Predictor_instance_test.define_DeepAR_predictor(freq = freq, prediction_length = prediction_length, epochs=epochs, num_layers = num_layers, batch_size = batch_size)
     Predictor_instance_test.train_predictor(train_ds = train_ds)
     forecast_it, ts_it = Predictor_instance_test.make_predictions(test_ds)
-    Predictor_instance_test.save_csv("test", forecast_it, ts_it)
+    Predictor_instance_test.save_csv("test", forecast_it, ts_it, Transactions_obj.scaler)
     ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'ts test.csv'))
     forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'forecast test.csv'))
-    mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test)
+    mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test, Transactions_obj.scaler)
     dict_mse_algo['DeepAR'] = mse_df['MSE'].mean()
     print('mean_mse_DeepAR:', '%0.f' %dict_mse_algo['DeepAR'])
 
@@ -38,10 +38,10 @@ if algorithm=='All':
     Predictor_instance_test.algorithm = 'Prophet'
     Predictor_instance_test.define_Prophet_predictor(freq = freq, prediction_length = prediction_length, prophet_params = prophet_params)
     forecast_it, ts_it = Predictor_instance_test.make_predictions(test_ds)
-    Predictor_instance_test.save_csv("test", forecast_it, ts_it)
+    Predictor_instance_test.save_csv("test", forecast_it, ts_it, Transactions_obj.scaler)
     ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'ts test.csv'))
     forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'forecast test.csv'))
-    mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test)
+    mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test, Transactions_obj.scaler)
     dict_mse_algo['Prophet'] = mse_df['MSE'].mean()
     print('mean_mse_Prophet:', '%0.f' %dict_mse_algo['Prophet'])
 
@@ -52,10 +52,10 @@ if algorithm=='All':
     Predictor_instance_test = Predictor_sales()
     Predictor_instance_test.algorithm = 'ARIMA'
     forecast_it, ts_it = Predictor_instance_test.make_predictions(test_ds)
-    Predictor_instance_test.save_csv("test_"+str(list_products[0]), forecast_it, ts_it)
+    Predictor_instance_test.save_csv("test_"+str(list_products[0]), forecast_it, ts_it, Transactions_obj.scaler)
     ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'ts test.csv'))
     forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, 'forecast test.csv'))
-    mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test)
+    mse_df = Predictor_instance_test.mse_compute(forecast_test, ts_test, Transactions_obj.scaler)
     dict_mse_algo['ARIMA'] = mse_df['MSE'].mean()
     print('mean_mse_ARIMA:', '%0.f' %dict_mse_algo['ARIMA'])
 
@@ -93,8 +93,6 @@ else:
     ## Saving forecasts into csv file
     Predictor_instance_test.save_csv("test", forecast_it, ts_it, Transactions_obj.scaler)
     ## Computing mse
-#     ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER,  "ts" +"_"+ str(data)+ "_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test_'+str(list_products[0]) + ".csv"))
-#     forecast_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, "forecast"+ "_"+ str(data)+"_"+ str(min_date) +"_"+ str(max_date) +"_"+ str(algorithm) +"_"+ str(freq) +"_"+ 'test_'+str(list_products[0]) + ".csv"))
     ts_name = "ts " + 'test' + ".csv"
     ts_test = pd.read_csv(os.path.join(OUTPUT_FOLDER, ts_name))
     forecast_name = "forecast " + 'test' + ".csv"
