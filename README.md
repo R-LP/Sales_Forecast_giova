@@ -9,7 +9,7 @@ Follow this instructions before trying to use the tool.
 
 ### Prerequisites
 
-To get started, please get the environment file *Eki HK - Documents\R and D\6. SKU sales forecast\8. environment\env.7z* and unzip it in the project folder.
+To get started, please get the environment file env.7z* and unzip it in the project folder.
 
 Then activate the environment using this command line in cmd prompt in the project folder:
 ```
