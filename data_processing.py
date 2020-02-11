@@ -106,7 +106,9 @@ class TransactionsData(Data):
         self.data = self.data[["OrderDate","Granulcolname", "SalesQuantity"]]
         self.data['Granulcolname'] = self.remove_special_char(self.data, 'Granulcolname')
         self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
-        self.promo_data = self.read_from_promo_folder(filename_promo)
+                self.promo_data = self.read_from_promo_folder(filename_promo)
+        if self.promo_data is not None:
+            self.promo_data = self.proper_input_col_names(self.promo_data, input_cols_promo_mapping)
         self.algorithm = algorithm
 
     @staticmethod
@@ -186,6 +188,8 @@ class TransactionsData(Data):
                 self.data_predict = self.data_predict.merge(self.agg_promo_data(granularity=freq, min_date=min_date, max_date = future_date), how = 'outer', on = "OrderDate")
             self.data_predict = self.create_temporal_features(self.data_predict, "OrderDate")
         
+        self.data_predict = self.data_predict.fillna(0)
+        
         # Creating the training set as a truncation of the prediction set
         data_train = self.data_predict[:-prediction_length]
         # Gluonts separates 'target' from 'feat_dynamic_real' to incorporate it as external additional data
@@ -206,7 +210,7 @@ class TransactionsData(Data):
         if self.algorithm=='DeepAR':
             self.train_final_ds = ListDataset([{'target': data_train[list_product].values, 
                                           'start': pd.Timestamp(min_date, freq=freq),
-                                          'feat_dynamic_real': data_train[self.List_features]}
+                                          'feat_dynamic_real': np.transpose(np.array(data_train[self.List_features]))}
                                          for list_product in self.List_product_no],
                                         freq=freq,
                                         one_dim_target = False)
@@ -215,7 +219,7 @@ class TransactionsData(Data):
 
             self.future_ds = ListDataset([{'target': self.data_predict[list_product].values, 
                                           'start': pd.Timestamp(min_date, freq=freq),
-                                          'feat_dynamic_real': self.data_predict[self.List_features]}
+                                          'feat_dynamic_real': np.transpose(np.array(self.data_predict[self.List_features]))}
                                          for list_product in self.List_product_no],
                                         freq=freq,
                                         one_dim_target = False)
