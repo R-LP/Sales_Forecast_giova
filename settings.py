@@ -18,6 +18,7 @@ data="GAB.csv"
 input_cols_mapping = {'OrderDate':'OrderDate',
                       'ProductEnglishname':'Granulcolname',
                       'SalesQuantity':'SalesQuantity'}
+input_cols_promo_mapping = {'Date':'OrderDate'}
 
 # Promo data file - .csv additional data file - Make sure OrderDate is the name of the date column - If no additional data, let it be None
 promo_data=None

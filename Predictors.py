@@ -35,7 +35,8 @@ class Predictor_sales(object):
     # DeepAR instance to be explicitly trained before predicting
     def define_DeepAR_predictor(self, freq, prediction_length, epochs, num_layers, batch_size):
         self.predictor = DeepAREstimator(freq=freq, prediction_length=prediction_length, context_length = prediction_length,
-                                trainer=Trainer(ctx="cpu", epochs=epochs, batch_size = batch_size, num_batches_per_epoch = 100), num_layers = num_layers)
+                                trainer=Trainer(ctx="cpu", epochs=epochs, batch_size = batch_size, num_batches_per_epoch = 100), num_layers = num_layers,
+                                use_feat_dynamic_real=True)
 
 
     # Prophet instance to implicitly trained during definition
