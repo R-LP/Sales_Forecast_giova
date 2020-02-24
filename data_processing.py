@@ -106,7 +106,7 @@ class TransactionsData(Data):
         self.data = self.data[["OrderDate","Granulcolname", "SalesQuantity"]]
         self.data['Granulcolname'] = self.remove_special_char(self.data, 'Granulcolname')
         self.data["SalesQuantity"] = self.data["SalesQuantity"].map(float)
-                self.promo_data = self.read_from_promo_folder(filename_promo)
+        self.promo_data = self.read_from_promo_folder(filename_promo)
         if self.promo_data is not None:
             self.promo_data = self.proper_input_col_names(self.promo_data, input_cols_promo_mapping)
         self.algorithm = algorithm

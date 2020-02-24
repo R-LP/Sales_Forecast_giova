@@ -7,7 +7,7 @@ colorama==0.4.1
 convertdate==2.2.0
 cycler==0.10.0
 Cython==0.29.14
-dataclasses==0.7
+dataclasses
 docutils==0.15.2
 graphviz==0.8.4
 holidays==0.9.12
@@ -23,7 +23,7 @@ matplotlib==3.1.2
 mccabe==0.6.1
 missingno==0.4.2
 mxnet==1.4.1
-numpy==1.16.6
+numpy
 pandas==0.25.3
 PasteDeploy==2.0.1
 patsy==0.5.1
@@ -58,3 +58,5 @@ WebOb==1.8.5
 wrapt==1.11.2
 zope.deprecation==4.4.0
 zope.interface==4.7.1
+gluonts
+fbprophet
